@@ -58,7 +58,7 @@ async function handler(req: Request): Promise<Response> {
 
     const openai = new OpenAI({ apiKey: openaiApiKey });
 
-    const systemPrompt = `You are a professional data analyst for Xylos, a SaaS analytics platform.
+    const systemPrompt = `You are a professional data analyst for Shemt, a SaaS analytics platform.
 You analyze revenue, users, and conversion metrics provided in the context.
 Explain trends clearly, provide actionable insights, and make recommendations.
 Be concise but thorough. Use a friendly, professional tone.

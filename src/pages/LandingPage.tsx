@@ -8,6 +8,7 @@
  * - SEO optimized metadata
  */
 
+import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { 
@@ -25,7 +26,11 @@ import {
   Sparkles,
   ChevronRight,
   Globe,
-  Layout
+  Layout,
+  Lock,
+  ShieldCheck,
+  EyeOff,
+  Server
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -110,23 +115,29 @@ const testimonials = [
 const plans = [
   {
     name: 'Free',
-    price: '$0',
+    monthlyPrice: '$0',
+    yearlyPrice: '$0',
     description: 'Perfect for side projects',
     features: ['Up to 1,000 events', 'Basic dashboards', 'Community support'],
     cta: 'Get Started',
-    popular: false
+    popular: false,
+    limitNote: 'Free forever'
   },
   {
     name: 'Pro',
-    price: '$79',
+    monthlyPrice: '$5',
+    yearlyPrice: '$4',
+    subPrice: '₦7,500',
     description: 'For growing startups',
     features: ['Up to 100k events', 'AI Analytics Assistant', 'Priority support', 'Custom alerts'],
     cta: 'Start Free Trial',
-    popular: true
+    popular: true,
+    limitNote: 'Soft limit — we never block your data'
   },
   {
     name: 'Enterprise',
-    price: 'Custom',
+    monthlyPrice: 'Custom',
+    yearlyPrice: 'Custom',
     description: 'For large organizations',
     features: ['Unlimited events', 'Custom AI models', 'Dedicated account manager', 'SLA guarantees'],
     cta: 'Contact Sales',
@@ -137,6 +148,7 @@ const plans = [
 export function LandingPage() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -172,7 +184,6 @@ export function LandingPage() {
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Features</a>
             <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">How it works</a>
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Pricing</a>
-            <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Testimonials</a>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -208,81 +219,161 @@ export function LandingPage() {
             <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent rounded-full" />
           </div>
 
-          <div className="container mx-auto px-4 text-center">
+          <div className="container mx-auto px-4 text-center relative min-h-[60vh] flex flex-col items-center justify-center">
+            
+            {/* Abstract 3D Geometric Animation (Behind Text) */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 1.2 }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none w-full max-w-3xl opacity-50 z-0"
+            >
+              {/* Background Ambient Glow */}
+              <div className="absolute inset-0 bg-primary/5 blur-[120px] rounded-full" />
+
+              {/* Central Glowing Core */}
+              <motion.div
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.3, 0.6, 0.3],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="absolute w-48 h-48 bg-primary/10 rounded-full blur-[40px] z-0"
+              />
+
+              {/* Floating Ring 1 (Horizontalish) */}
+              <motion.div
+                animate={{
+                  rotateX: [60, 75, 60],
+                  rotateY: [0, 180, 360],
+                }}
+                transition={{
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                className="absolute w-64 h-64 md:w-80 md:h-80 border border-primary/20 rounded-full shadow-[0_0_30px_rgba(255,255,255,0.02)] border-t-primary/40 border-b-primary/5"
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                {/* Orbiting Satellite 1 */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-primary/80 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+              </motion.div>
+
+              {/* Floating Ring 2 (Verticalish) */}
+              <motion.div
+                animate={{
+                  rotateX: [70, 50, 70],
+                  rotateY: [360, 180, 0],
+                }}
+                transition={{
+                  duration: 25,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                className="absolute w-80 h-80 md:w-96 md:h-96 border border-primary/10 rounded-full border-r-primary/30 border-l-primary/5"
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                {/* Orbiting Satellite 2 */}
+                <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-emerald-400/80 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+              </motion.div>
+
+              {/* Floating Box/Node 1 */}
+              <motion.div
+                animate={{
+                  y: [-15, 15, -15],
+                  rotateZ: [0, 10, 0],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="absolute -left-12 lg:-left-24 top-1/4 w-12 h-12 md:w-16 md:h-16 bg-card/10 backdrop-blur-sm border border-border/50 rounded-xl shadow-xl flex items-center justify-center p-3"
+              >
+                <div className="w-full h-full border border-primary/20 rounded-lg flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-primary/80 rounded-full animate-pulse" />
+                </div>
+              </motion.div>
+
+              {/* Floating Box/Node 2 */}
+              <motion.div
+                animate={{
+                  y: [20, -20, 20],
+                  rotateZ: [0, -5, 0],
+                }}
+                transition={{
+                  duration: 7,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 1,
+                }}
+                className="absolute -right-4 lg:-right-16 bottom-1/4 w-16 h-16 md:w-20 md:h-20 bg-card/10 backdrop-blur-sm border border-border/50 rounded-2xl shadow-xl flex items-center justify-center"
+              >
+                <div className="grid grid-cols-2 gap-1.5 p-3 w-full h-full opacity-40">
+                  <div className="bg-primary/40 rounded-sm" />
+                  <div className="bg-primary/20 rounded-sm" />
+                  <div className="bg-primary/20 rounded-sm" />
+                  <div className="bg-primary/60 rounded-sm" />
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Floating AI Insight Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.5, duration: 0.8 }}
+              className="absolute hidden md:flex bottom-10 left-10 lg:left-20 z-20 items-center gap-3 bg-card/60 backdrop-blur-md border border-primary/20 rounded-2xl p-4 shadow-2xl"
+            >
+              <div className="bg-primary/20 p-2 rounded-full">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-primary" /> AI Insight
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">Your MRR increased by 15% this week.</p>
+              </div>
+            </motion.div>
+
+            {/* Hero Text Foreground */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
+              className="relative z-10 w-full max-w-4xl mx-auto"
             >
               <Badge variant="outline" className="mb-6 px-4 py-1.5 border-primary/20 bg-primary/5 text-primary">
                 <Sparkles className="mr-2 h-3.5 w-3.5" />
                 Now with GPT-4o Powered Insights
               </Badge>
               <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl mb-8">
-                AI-Powered Analytics for <br />
+                AI-Powered Analytics for <br className="hidden sm:block" />
                 <span className="text-primary italic">Modern Startups</span>
               </h1>
-              <p className="mx-auto mt-6 max-w-3xl text-lg text-muted-foreground sm:text-xl leading-relaxed">
+              <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl leading-relaxed">
                 Understand your revenue, users, and growth with Shemt. 
                 Our AI analyst uncovers hidden trends in your data so you can focus on building what matters.
               </p>
-              <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-                <Link to="/signup">
-                  <Button size="lg" className="h-12 px-8 text-lg gap-2 shadow-xl shadow-primary/20 w-full sm:w-auto">
-                    Get Started Free
-                    <ArrowRight className="h-5 w-5" />
+              <div className="mt-10 flex flex-col items-center">
+                <div className="flex flex-col sm:flex-row justify-center gap-4 w-full">
+                  <Link to="/signup">
+                    <Button size="lg" className="h-12 px-8 text-lg gap-2 shadow-xl shadow-primary/20 w-full sm:w-auto">
+                      Get Started Free
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Button size="lg" variant="outline" className="h-12 px-8 text-lg w-full sm:w-auto bg-background/50 backdrop-blur-md">
+                    Watch Demo
                   </Button>
-                </Link>
-                <Button size="lg" variant="outline" className="h-12 px-8 text-lg w-full sm:w-auto">
-                  Watch Demo
-                </Button>
-              </div>
-            </motion.div>
-
-            {/* Product Screenshot */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              className="mt-20 relative"
-            >
-              <div className="relative mx-auto max-w-5xl rounded-2xl border border-border/50 bg-muted/30 p-2 backdrop-blur-sm shadow-2xl overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent pointer-events-none z-10" />
-                <img 
-                  src={DASHBOARD_SCREENSHOT} 
-                  alt="Shemt Dashboard Overview" 
-                  className="rounded-xl w-full h-auto shadow-inner transition-transform duration-700 group-hover:scale-[1.02]"
-                />
-              </div>
-              
-              {/* Floating element 1 */}
-              <div className="absolute -top-6 -left-6 hidden lg:block animate-bounce-slow">
-                <Card className="p-4 shadow-xl border-primary/20 bg-background/80 backdrop-blur-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-emerald-500" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Revenue Up</p>
-                      <p className="text-sm font-bold">+24.5%</p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-
-              {/* Floating element 2 */}
-              <div className="absolute -bottom-10 -right-6 hidden lg:block animate-float">
-                <Card className="p-4 shadow-xl border-primary/20 bg-background/80 backdrop-blur-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">AI Insight</p>
-                      <p className="text-sm font-bold italic">"Growth trend is healthy"</p>
-                    </div>
-                  </div>
-                </Card>
+                </div>
+                <p className="mt-4 text-xs font-medium text-muted-foreground">
+                  No credit card required • Setup in 2 minutes
+                </p>
               </div>
             </motion.div>
           </div>
@@ -292,12 +383,25 @@ export function LandingPage() {
         <section className="py-12 border-y bg-muted/20">
           <div className="container mx-auto px-4">
             <p className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-8">
-              Trusted by fast-growing startups
+              Enterprise-grade security & privacy
             </p>
-            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:opacity-100 transition-opacity">
-              {['Acme', 'Stripe', 'Vercel', 'Linear', 'Supabase'].map(logo => (
-                <span key={logo} className="text-2xl font-bold italic text-foreground tracking-tighter">{logo}</span>
-              ))}
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-70">
+              <div className="flex items-center gap-2 text-foreground font-medium">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+                <span>SOC2 Compliant</span>
+              </div>
+              <div className="flex items-center gap-2 text-foreground font-medium">
+                <Lock className="h-5 w-5 text-primary" />
+                <span>End-to-End Encrypted</span>
+              </div>
+              <div className="flex items-center gap-2 text-foreground font-medium">
+                <EyeOff className="h-5 w-5 text-primary" />
+                <span>Privacy First</span>
+              </div>
+              <div className="flex items-center gap-2 text-foreground font-medium">
+                <Server className="h-5 w-5 text-primary" />
+                <span>Data Residency</span>
+              </div>
             </div>
           </div>
         </section>
@@ -319,23 +423,79 @@ export function LandingPage() {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="grid gap-8 md:grid-cols-2 lg:grid-cols-3"
+              className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-3 auto-rows-[250px]"
             >
-              {features.map((feature, index) => (
-                <motion.div key={index} variants={itemVariants}>
-                  <Card className="h-full transition-all hover:shadow-xl hover:-translate-y-1 border-border/50 bg-card/50 backdrop-blur-sm group">
-                    <CardContent className="pt-8">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-6 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-                        <feature.icon className="h-7 w-7" />
+              {/* 1. Large Feature span 2 cols, 2 rows */}
+              <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-2">
+                <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden relative group">
+                  <CardContent className="p-6 md:p-8 flex flex-col h-full z-10 relative">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-6 text-primary">
+                      <Cpu className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-3">AI Analytics Insights</h3>
+                    <p className="text-muted-foreground text-lg mb-8 max-w-sm">
+                      Ask our AI any question about your data and get instant, actionable insights without writing SQL.
+                    </p>
+                    {/* Visual */}
+                    <div className="mt-auto h-48 rounded-xl bg-gradient-to-t from-background to-muted/50 border flex items-end p-4 md:p-6 relative overflow-hidden">
+                      <div className="w-full bg-card border rounded-lg p-4 shadow-xl opacity-90 transition-transform duration-500 group-hover:-translate-y-2">
+                         <div className="flex items-center gap-2 mb-3"><Sparkles className="h-4 w-4 text-primary animate-pulse"/> <span className="text-sm font-semibold">Generating query...</span></div>
+                         <div className="space-y-2">
+                           <div className="h-2 w-3/4 bg-muted-foreground/20 rounded-full"></div>
+                           <div className="h-2 w-1/2 bg-muted-foreground/20 rounded-full"></div>
+                           <div className="h-2 w-5/6 bg-muted-foreground/10 rounded-full"></div>
+                         </div>
                       </div>
-                      <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                      <p className="text-muted-foreground leading-relaxed">
-                        {feature.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+                    </div>
+                  </CardContent>
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                </Card>
+              </motion.div>
+
+              {/* 2. Top Right Feature */}
+              <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
+                <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm group overflow-hidden relative">
+                  <CardContent className="p-6 flex flex-col h-full">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 mb-4 text-primary">
+                      <Zap className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">Real-time Dashboard</h3>
+                    <p className="text-muted-foreground text-sm flex-1">
+                      Live data streaming. See events exactly as they happen.
+                    </p>
+                    <div className="h-20 w-full mt-4 flex items-end gap-1.5 opacity-50 group-hover:opacity-100 transition-opacity duration-500">
+                       {[40, 70, 45, 90, 65, 80, 100, 55, 75].map((h, i) => (
+                         <motion.div 
+                           key={i} 
+                           className="flex-1 bg-primary rounded-t-sm" 
+                           initial={{height: `${h}%`}} 
+                           animate={{height: [`${h}%`, `${Math.min(100, h+20)}%`, `${Math.max(10, h-20)}%`, `${h}%`]}} 
+                           transition={{duration: Math.random()*2+2, repeat: Infinity, ease: "easeInOut"}} 
+                         />
+                       ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* 3. Bottom Right Feature */}
+              <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
+                <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm group relative overflow-hidden">
+                  <CardContent className="p-6 flex flex-col h-full z-10 relative">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 mb-4 text-primary">
+                      <Shield className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">Enterprise Security</h3>
+                    <p className="text-muted-foreground text-sm mb-4">
+                      SOC2 compliance, End-to-end encryption, and role-based access control built in.
+                    </p>
+                    <div className="mt-auto grid grid-cols-2 gap-2">
+                       <div className="text-[10px] font-mono border rounded px-2 py-1 flex items-center justify-center text-muted-foreground bg-muted/30">SOC2 Type II</div>
+                       <div className="text-[10px] font-mono border rounded px-2 py-1 flex items-center justify-center text-muted-foreground bg-muted/30">GDPR Ready</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </motion.div>
           </div>
         </section>
@@ -367,18 +527,51 @@ export function LandingPage() {
                 </div>
               </div>
               <div className="flex-1 relative">
-                <div className="relative rounded-2xl border border-border/50 bg-muted p-4 shadow-2xl">
-                  <div className="aspect-[4/3] rounded-xl bg-slate-900 flex items-center justify-center overflow-hidden">
-                    {/* Placeholder for interactive demo or secondary screenshot */}
-                    <div className="p-8 text-center space-y-4">
-                      <MessageSquare className="h-16 w-16 text-primary mx-auto opacity-50" />
-                      <p className="text-slate-400 font-mono text-sm">
-                        {"User: Why did conversion drop?"} <br />
-                        {"AI: Looking at your landing page traffic..."}
-                      </p>
-                      <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-primary animate-progress-fast" />
+                <div className="relative rounded-2xl border border-border/50 bg-muted/30 p-2 shadow-2xl backdrop-blur-sm">
+                  <div className="aspect-[4/3] rounded-xl bg-card border flex flex-col overflow-hidden relative">
+                    {/* Chat Header */}
+                    <div className="h-12 border-b bg-muted/30 flex items-center px-4 gap-2 shrink-0">
+                      <div className="flex gap-1.5 mr-2">
+                        <div className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
+                        <div className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
+                        <div className="h-2.5 w-2.5 rounded-full bg-green-400/80" />
                       </div>
+                      <span className="text-xs font-semibold text-muted-foreground">Shemt AI Analyst</span>
+                    </div>
+                    {/* Chat Body */}
+                    <div className="flex-1 p-4 sm:p-6 flex flex-col gap-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 to-transparent overflow-hidden">
+                      {/* User Message */}
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="self-end max-w-[85%] bg-primary text-primary-foreground text-sm sm:text-base rounded-2xl rounded-tr-sm px-4 py-2.5 shadow-sm"
+                      >
+                        Why did conversion drop yesterday?
+                      </motion.div>
+                      {/* AI Response */}
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.5 }}
+                        className="self-start max-w-[90%] bg-muted/80 backdrop-blur-sm border text-sm sm:text-base rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex gap-3"
+                      >
+                        <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <div className="space-y-3 w-full">
+                          <p className="leading-relaxed">Traffic from your Facebook Ad campaign spiked, but the bounce rate was <span className="font-bold text-red-400">85%</span>.</p>
+                          <div className="h-2 w-full bg-primary/10 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }} 
+                              whileInView={{ width: "85%" }} 
+                              viewport={{ once: true }}
+                              transition={{ duration: 1, delay: 1 }}
+                              className="h-full bg-red-400" 
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground font-mono bg-background/50 p-2 rounded border">Insight: Mobile load times averaged 4.2s.</p>
+                        </div>
+                      </motion.div>
                     </div>
                   </div>
                 </div>
@@ -392,7 +585,7 @@ export function LandingPage() {
         {/* Pricing Section */}
         <section id="pricing" className="py-24 lg:py-32 bg-muted/20 border-y">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-20">
+            <div className="text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4">
                 Simple, transparent pricing
               </h2>
@@ -401,14 +594,32 @@ export function LandingPage() {
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-3 max-w-6xl mx-auto">
+            {/* Billing Toggle */}
+            <div className="flex justify-center items-center gap-4 mb-16">
+              <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
+              <button 
+                onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
+                className="relative w-12 h-6 rounded-full bg-muted border border-border p-1 transition-colors hover:border-primary/50"
+              >
+                <motion.div 
+                  animate={{ x: billingCycle === 'monthly' ? 0 : 24 }}
+                  className="w-4 h-4 rounded-full bg-primary"
+                />
+              </button>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-medium ${billingCycle === 'yearly' ? 'text-foreground' : 'text-muted-foreground'}`}>Yearly</span>
+                <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] py-0 px-1.5 pt-0.5">Save 20%</Badge>
+              </div>
+            </div>
+
+            <div className="grid gap-8 md:grid-cols-3 max-w-6xl mx-auto pt-4 md:pt-8">
               {plans.map((plan, index) => (
                 <Card 
                   key={index} 
-                  className={plan.popular ? 'border-primary shadow-2xl relative scale-105 z-10' : 'border-border/50 bg-card/50'}
+                  className={plan.popular ? 'border-primary shadow-2xl relative md:scale-105 z-10 overflow-visible' : 'border-border/50 bg-card/50'}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full z-20">
                       Most Popular
                     </div>
                   )}
@@ -417,18 +628,42 @@ export function LandingPage() {
                     <CardDescription>{plan.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-8">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-extrabold tracking-tight">{plan.price}</span>
-                      {plan.name !== 'Enterprise' && <span className="text-muted-foreground">/mo</span>}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-5xl font-extrabold tracking-tight">
+                          {billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice}
+                        </span>
+                        {plan.name !== 'Enterprise' && <span className="text-muted-foreground">/mo</span>}
+                      </div>
+                      {plan.subPrice && billingCycle === 'monthly' && (
+                        <span className="text-sm font-medium text-muted-foreground ml-1">
+                          (approx. {plan.subPrice}/mo)
+                        </span>
+                      )}
+                      {plan.subPrice && billingCycle === 'yearly' && (
+                        <span className="text-sm font-medium text-muted-foreground ml-1">
+                          (approx. ₦6,000/mo billed annually)
+                        </span>
+                      )}
                     </div>
-                    <ul className="space-y-4">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-start gap-3 text-sm">
-                          <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                          <span className="text-muted-foreground">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
+
+                    <div className="space-y-4">
+                      <ul className="space-y-4">
+                        {plan.features.map((feature, i) => (
+                          <li key={i} className="flex items-start gap-3 text-sm">
+                            <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                            <span className="text-muted-foreground">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {plan.limitNote && (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
+                          <Zap className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-[10px] font-medium text-primary uppercase tracking-wider">{plan.limitNote}</span>
+                        </div>
+                      )}
+                    </div>
+                    
                     <Link to="/signup" className="block">
                       <Button 
                         className="w-full h-12 text-md" 
@@ -437,42 +672,6 @@ export function LandingPage() {
                         {plan.cta}
                       </Button>
                     </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section id="testimonials" className="py-24 lg:py-32">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-20">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4">
-                Loved by growth teams
-              </h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Join the startups scaling their business with Shemt
-              </p>
-            </div>
-            <div className="grid gap-8 md:grid-cols-3">
-              {testimonials.map((t, index) => (
-                <Card key={index} className="bg-muted/30 border-border/50">
-                  <CardContent className="pt-8">
-                    <p className="text-lg italic text-muted-foreground mb-8 leading-relaxed">
-                      "{t.quote}"
-                    </p>
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12 border-2 border-primary/20 shadow-sm">
-                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                          {t.avatar}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-bold">{t.author}</p>
-                        <p className="text-sm text-muted-foreground">{t.role}</p>
-                      </div>
-                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -561,7 +760,7 @@ export function LandingPage() {
           </div>
           
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-8 border-t border-border/50 text-muted-foreground text-xs uppercase tracking-widest font-semibold">
-            <p>&copy; 2024 Shemt Analytics Inc. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Shemt Analytics Inc. All rights reserved.</p>
             <div className="flex gap-8">
               <a href="#" className="hover:text-primary transition-colors">Twitter</a>
               <a href="#" className="hover:text-primary transition-colors">GitHub</a>
