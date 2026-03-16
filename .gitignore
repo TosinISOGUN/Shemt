@@ -10,7 +10,14 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# Environments & Secrets
+.env
+.env.*
+!.env.example
 *.local
+supabase/.temp/
+.supabase/
+.blink/
 
 # Editor directories and files
 .vscode/*
