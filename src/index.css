@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Lora:ital,wght@0,400..700;1,400..700&family=IBM+Plex+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Minimalistic SaaS Palette - Dark Mode */
+    /* Primary: White/Light Gray for Stark Contrast */
+    --primary: 0 0% 98%;           /* Zinc 50 */
+    --primary-foreground: 240 5.9% 10%; /* Zinc 900 */
+    
+    /* Secondary: Subtle dark grays */
+    --secondary: 240 3.7% 15.9%;    /* Zinc 800 */
+    --secondary-foreground: 0 0% 98%;
+    
+    /* Accent: Highlights */
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    
+    /* Backgrounds */
+    --background: 240 10% 3.9%;     /* Zinc 950 */
+    --foreground: 0 0% 98%;         /* Zinc 50 */
+    
+    /* Cards */
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    
+    /* Popovers */
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Muted */
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%; /* Zinc 400 */
+    
+    /* Destructive */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    
+    /* Borders & Inputs */
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    
+    /* Charts - Grayscale / Muted tones */
+    --chart-1: 0 0% 98%;
+    --chart-2: 240 5% 64.9%;
+    --chart-3: 240 3.7% 15.9%;
+    --chart-4: 240 5.9% 10%;
+    --chart-5: 0 0% 20%;
+    
+    /* Sidebar */
+    --sidebar: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Typography */
+    --font-sans: 'DM Sans', sans-serif;
+    --font-serif: 'Lora', serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    
+    /* Shadows */
+    --shadow-2xs: 0px 2px 4px -1px hsl(0 0% 0% / 0.04);
+    --shadow-xs: 0px 4px 6px -1px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0px 4px 8px -1px hsl(0 0% 0% / 0.06), 0px 1px 2px -1px hsl(0 0% 0% / 0.06);
+    --shadow: 0px 4px 10px -1px hsl(0 0% 0% / 0.07), 0px 2px 4px -2px hsl(0 0% 0% / 0.07);
+    --shadow-md: 0px 6px 12px -2px hsl(0 0% 0% / 0.08), 0px 4px 6px -3px hsl(0 0% 0% / 0.08);
+    --shadow-lg: 0px 10px 20px -3px hsl(0 0% 0% / 0.1), 0px 6px 8px -4px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0px 20px 30px -5px hsl(0 0% 0% / 0.12), 0px 10px 12px -6px hsl(0 0% 0% / 0.12);
+    --shadow-2xl: 0px 25px 40px -8px hsl(0 0% 0% / 0.15);
+    
+    /* Misc */
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
+    --radius: 0.625rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    letter-spacing: var(--tracking-normal);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes progress-fast {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 4s ease-in-out infinite;
+}
+
+.animate-progress-fast {
+  animation: progress-fast 2s linear infinite;
+}
