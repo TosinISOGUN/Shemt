@@ -6,7 +6,13 @@ import { ThemeProvider } from '@/providers/ThemeProvider'
 import { AuthProvider } from '@/hooks/useAuth'
 import { Toaster } from 'react-hot-toast'
 import { router } from './routes'
+import { analytics } from '@/services/analyticsService'
 import './index.css'
+
+// Track page views on route changes
+router.subscribe('onResolved', () => {
+  analytics.trackPageView()
+})
 
 const queryClient = new QueryClient({
   defaultOptions: {

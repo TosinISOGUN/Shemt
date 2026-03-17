@@ -8,7 +8,7 @@
  * - Icon + text navigation
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -17,12 +17,9 @@ import {
   BarChart3, 
   CreditCard, 
   Settings,
-  ChevronLeft,
-  ChevronRight,
   Activity
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 
 interface SidebarProps {
   collapsed?: boolean
@@ -36,11 +33,6 @@ const navItems = [
     icon: LayoutDashboard 
   },
   { 
-    label: 'Users', 
-    href: '/dashboard/users', 
-    icon: Users 
-  },
-  { 
     label: 'Analytics', 
     href: '/dashboard/analytics', 
     icon: BarChart3 
@@ -51,36 +43,61 @@ const navItems = [
     icon: CreditCard 
   },
   { 
+    label: 'Users', 
+    href: '/dashboard/users', 
+    icon: Users 
+  },
+  { 
     label: 'Settings', 
     href: '/dashboard/settings', 
     icon: Settings 
   },
 ]
 
-export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed = false }: SidebarProps) {
   const location = useLocation()
+  const [isHovered, setIsHovered] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   
+  // Detect mobile view for label visibility
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  const isExpanded = isMobile || !collapsed || isHovered
+
   return (
     <motion.aside
       initial={false}
-      animate={{ width: collapsed ? 72 : 260 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="fixed left-0 top-0 h-screen z-40 flex flex-col border-r bg-sidebar"
+      onMouseEnter={() => !isMobile && collapsed && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      animate={{ 
+        width: isExpanded ? 260 : 72,
+        x: 0 
+      }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
+      className={cn(
+        "fixed left-0 top-0 h-screen z-[60] flex flex-col border-r bg-sidebar transition-transform lg:translate-x-0",
+        isExpanded ? "shadow-2xl ring-1 ring-black/5" : "shadow-none",
+        !collapsed ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}
     >
       {/* Logo Section */}
       <div className="flex h-16 items-center justify-between border-b px-4">
         <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary shrink-0">
             <Activity className="h-5 w-5 text-primary-foreground" />
           </div>
-          <AnimatePresence mode="wait">
-            {!collapsed && (
+          <AnimatePresence>
+            {isExpanded && (
               <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-                className="font-semibold text-sidebar-foreground"
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                className="font-semibold text-sidebar-foreground truncate"
               >
                 Shemt
               </motion.span>
@@ -90,7 +107,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       </div>
 
       {/* Navigation Items */}
-      <nav className="flex-1 space-y-1 p-3">
+      <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href || 
             (item.href !== '/dashboard' && location.pathname.startsWith(item.href))
@@ -99,22 +116,23 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             <Link
               key={item.href}
               to={item.href}
+              activeOptions={item.href === '/dashboard' ? { exact: true } : undefined}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group',
                 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
                 isActive 
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm' 
                   : 'text-sidebar-foreground/70'
               )}
             >
-              <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-primary')} />
-              <AnimatePresence mode="wait">
-                {!collapsed && (
+              <item.icon className={cn('h-5 w-5 shrink-0 transition-colors', isActive ? 'text-primary' : 'group-hover:text-primary')} />
+              <AnimatePresence>
+                {isExpanded && (
                   <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="truncate"
                   >
                     {item.label}
                   </motion.span>
@@ -124,25 +142,6 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
           )
         })}
       </nav>
-
-      {/* Collapse Toggle */}
-      <div className="border-t p-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggle}
-          className="w-full justify-center text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <>
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              <span>Collapse</span>
-            </>
-          )}
-        </Button>
-      </div>
     </motion.aside>
   )
 }

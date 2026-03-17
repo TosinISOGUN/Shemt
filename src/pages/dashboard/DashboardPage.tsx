@@ -45,6 +45,11 @@ export function DashboardPage() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
+  // Ensure page starts at top on load
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   // Fetch metrics summary
   const { 
     data: metrics, 
@@ -262,9 +267,13 @@ export function DashboardPage() {
                         contentStyle={{
                           backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                          boxShadow: 'var(--shadow-md)'
+                          borderRadius: '12px',
+                          boxShadow: 'var(--shadow-lg)',
+                          backdropFilter: 'blur(8px)',
+                          color: 'hsl(var(--foreground))'
                         }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
                       <Area 
                         type="monotone" 
@@ -314,9 +323,13 @@ export function DashboardPage() {
                         contentStyle={{
                           backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                          boxShadow: 'var(--shadow-md)'
+                          borderRadius: '12px',
+                          boxShadow: 'var(--shadow-lg)',
+                          backdropFilter: 'blur(8px)',
+                          color: 'hsl(var(--foreground))'
                         }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
                       <Bar 
                         dataKey="value" 

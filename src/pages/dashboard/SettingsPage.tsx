@@ -1,14 +1,10 @@
-/**
- * SettingsPage - Settings and preferences page
- */
-
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   User as UserIcon, 
   Bell, 
@@ -16,29 +12,27 @@ import {
   Palette, 
   Globe,
   Save,
-  Mail,
-  Phone,
-  Building,
   Loader2,
-  Camera
+  Camera,
+  Shield,
+  CreditCard,
+  Mail,
+  Smartphone,
+  Check
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'react-hot-toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { cn } from '@/lib/utils'
 
 export function SettingsPage() {
   const { user, updateProfile } = useAuth()
+  const [activeTab, setActiveTab] = useState('profile')
   const [loading, setLoading] = useState(false)
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     avatar_url: user?.avatar_url || ''
-  })
-
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: false,
-    marketing: true,
   })
 
   const handleProfileSave = async () => {
@@ -54,310 +48,184 @@ export function SettingsPage() {
     }
   }
 
+  const tabs = [
+    { id: 'profile', label: 'Profile', icon: UserIcon },
+    { id: 'security', label: 'Security', icon: Shield },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'billing', label: 'Billing', icon: CreditCard },
+    { id: 'appearance', label: 'Appearance', icon: Palette },
+  ]
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your account settings and preferences.
-        </p>
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-4xl font-black tracking-tight">Settings</h1>
+        <p className="text-muted-foreground">Manage your workspace preferences and security.</p>
       </div>
 
-      {/* Settings Tabs */}
-      <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="profile" className="gap-2">
-            <UserIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Profile</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
-            <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Notifications</span>
-          </TabsTrigger>
-          <TabsTrigger value="security" className="gap-2">
-            <Lock className="h-4 w-4" />
-            <span className="hidden sm:inline">Security</span>
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="gap-2">
-            <Palette className="h-4 w-4" />
-            <span className="hidden sm:inline">Appearance</span>
-          </TabsTrigger>
-          <TabsTrigger value="integrations" className="gap-2">
-            <Globe className="h-4 w-4" />
-            <span className="hidden sm:inline">Integrations</span>
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col md:flex-row gap-8">
+        {/* Settings Sidebar */}
+        <aside className="w-full md:w-64 shrink-0">
+          <nav className="flex md:flex-col gap-1 overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all shrink-0",
+                  activeTab === tab.id 
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-        {/* Profile Settings */}
-        <TabsContent value="profile">
-          <Card className="border-border/50 shadow-sm bg-card/50 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your personal information and how others see you</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              {/* Avatar Section */}
-              <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-border/50">
-                <div className="relative group">
-                  <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
-                    <AvatarImage src={profileData.avatar_url} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
-                      {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <button className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="h-6 w-6" />
-                  </button>
-                </div>
-                <div className="text-center sm:text-left space-y-1">
-                  <h4 className="text-lg font-bold">{user?.name || 'User'}</h4>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  <div className="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
-                    <Button variant="outline" size="sm" className="h-8 text-xs">Change Avatar</Button>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs text-destructive">Remove</Button>
-                  </div>
-                </div>
-              </div>
+        {/* Dynamic Content Area */}
+        <main className="flex-1 min-w-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {activeTab === 'profile' && (
+                <div className="space-y-6">
+                  <header>
+                    <h2 className="text-2xl font-bold">Public Profile</h2>
+                    <p className="text-sm text-muted-foreground">How others see you on the platform.</p>
+                  </header>
 
-              <div className="space-y-4">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input 
-                      id="name" 
-                      value={profileData.name} 
-                      onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                      className="bg-background/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      value={profileData.email} 
-                      disabled 
-                      className="bg-muted opacity-70"
-                    />
-                    <p className="text-[10px] text-muted-foreground">Email cannot be changed directly.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" placeholder="+1 (555) 000-0000" className="bg-background/50" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="company">Company / Workspace Name</Label>
-                  <Input id="company" placeholder="Acme Inc." className="bg-background/50" />
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-4">
-                <Button 
-                  onClick={handleProfileSave} 
-                  disabled={loading}
-                  className="gap-2 shadow-lg shadow-primary/20"
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Save Profile
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Notifications Settings */}
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Choose how you want to be notified</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="emailNotif">Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive email updates about your account</p>
-                </div>
-                <Switch 
-                  id="emailNotif" 
-                  checked={notifications.email}
-                  onCheckedChange={(checked) => setNotifications({ ...notifications, email: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="pushNotif">Push Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive push notifications on your devices</p>
-                </div>
-                <Switch 
-                  id="pushNotif" 
-                  checked={notifications.push}
-                  onCheckedChange={(checked) => setNotifications({ ...notifications, push: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="marketingNotif">Marketing Emails</Label>
-                  <p className="text-sm text-muted-foreground">Receive updates about new features and offers</p>
-                </div>
-                <Switch 
-                  id="marketingNotif" 
-                  checked={notifications.marketing}
-                  onCheckedChange={(checked) => setNotifications({ ...notifications, marketing: checked })}
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <Button className="gap-2">
-                  <Save className="h-4 w-4" />
-                  Save Preferences
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Security Settings */}
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Manage your password and security options</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input id="currentPassword" type="password" />
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <Input id="newPassword" type="password" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input id="confirmPassword" type="password" />
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <Button className="gap-2">
-                  <Lock className="h-4 w-4" />
-                  Update Password
-                </Button>
-              </div>
-
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
-                  </div>
-                  <Button variant="outline">Enable 2FA</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Appearance Settings */}
-        <TabsContent value="appearance">
-          <Card>
-            <CardHeader>
-              <CardTitle>Appearance</CardTitle>
-              <CardDescription>Customize how Shemt looks</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <Label>Theme</Label>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="cursor-pointer rounded-lg border-2 border-primary p-4">
-                    <div className="flex h-20 items-center justify-center rounded bg-white dark:bg-slate-900">
-                      <div className="text-center">
-                        <p className="text-sm font-medium">Light</p>
+                  <Card className="border-border/50 bg-card/50 backdrop-blur-sm shadow-sm">
+                    <CardContent className="p-8 space-y-8">
+                      {/* Avatar Section */}
+                      <div className="flex flex-col sm:flex-row items-center gap-6">
+                        <div className="relative group">
+                          <Avatar className="h-28 w-28 border-4 border-background shadow-2xl transition-transform group-hover:scale-105">
+                            <AvatarImage src={profileData.avatar_url} />
+                            <AvatarFallback className="bg-primary text-primary-foreground text-3xl font-black">
+                              {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <label className="absolute inset-0 flex items-center justify-center bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-all backdrop-blur-[2px]">
+                            <Camera className="h-8 w-8" />
+                            <input type="file" className="hidden" />
+                          </label>
+                        </div>
+                        <div className="space-y-2 text-center sm:text-left">
+                          <h3 className="text-xl font-bold font-serif">{displayName(user?.name)}</h3>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center sm:justify-start">
+                            <Mail className="h-3.5 w-3.5" />
+                            {user?.email}
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                            <Button size="sm" className="rounded-full h-8 px-4 text-xs">Update Photo</Button>
+                            <Button variant="outline" size="sm" className="rounded-full h-8 px-4 text-xs text-destructive hover:bg-destructive/5 border-destructive/20">Remove</Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="cursor-pointer rounded-lg border p-4">
-                    <div className="flex h-20 items-center justify-center rounded bg-white dark:bg-slate-900">
-                      <div className="text-center">
-                        <p className="text-sm font-medium">Dark</p>
+
+                      {/* Form */}
+                      <div className="grid gap-6 md:grid-cols-2 pt-6 border-t border-border/50">
+                        <div className="space-y-2">
+                          <Label htmlFor="fullname" className="text-sm font-semibold">Display Name</Label>
+                          <Input 
+                            id="fullname" 
+                            className="bg-muted/30 border-border/50 focus:bg-background transition-all rounded-lg"
+                            placeholder="Your name"
+                            value={profileData.name}
+                            onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="emailaddr" className="text-sm font-semibold">Contact Email</Label>
+                          <Input 
+                            id="emailaddr" 
+                            className="bg-muted border-border/20 opacity-60 cursor-not-allowed rounded-lg"
+                            value={user?.email || ''}
+                            disabled
+                          />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="bio" className="text-sm font-semibold">Short Bio</Label>
+                          <textarea 
+                            id="bio"
+                            className="w-full min-h-[100px] bg-muted/30 border border-border/50 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:bg-background transition-all"
+                            placeholder="A few words about yourself..."
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="cursor-pointer rounded-lg border p-4">
-                    <div className="flex h-20 items-center justify-center rounded bg-white dark:bg-slate-900">
-                      <div className="text-center">
-                        <p className="text-sm font-medium">System</p>
+
+                      <div className="flex justify-end pt-4">
+                        <Button 
+                          onClick={handleProfileSave}
+                          disabled={loading}
+                          className="px-8 rounded-full shadow-lg shadow-primary/25"
+                        >
+                          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                          Save Changes
+                        </Button>
                       </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {activeTab === 'security' && (
+                <div className="space-y-6">
+                  <header>
+                    <h2 className="text-2xl font-bold">Security</h2>
+                    <p className="text-sm text-muted-foreground">Manage your credentials and authentication.</p>
+                  </header>
+                  <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                    <CardContent className="p-8 space-y-6">
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-bold">Change Password</h3>
+                        <div className="space-y-4 max-w-md">
+                          <div className="space-y-2">
+                            <Label>Current Password</Label>
+                            <Input type="password" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>New Password</Label>
+                            <Input type="password" />
+                          </div>
+                          <Button className="rounded-full">Update Password</Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Other tabs with minimal consistent styling */}
+              {['notifications', 'billing', 'appearance'].includes(activeTab) && (
+                <Card className="border-border/50 bg-card/50 backdrop-blur-sm min-h-[400px] flex items-center justify-center border-dashed border-2">
+                  <div className="text-center space-y-4">
+                    <Palette className="h-12 w-12 text-muted-foreground mx-auto opacity-20" />
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-bold capitalize">{activeTab} Controls</h3>
+                      <p className="text-muted-foreground">Enhanced {activeTab} settings are being finalized.</p>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Accent Color</Label>
-                <div className="flex gap-3">
-                  <button className="h-8 w-8 rounded-full bg-teal-600 ring-2 ring-offset-2 ring-teal-600" />
-                  <button className="h-8 w-8 rounded-full bg-blue-600 ring-offset-2 ring-transparent hover:ring-blue-600" />
-                  <button className="h-8 w-8 rounded-full bg-purple-600 ring-offset-2 ring-transparent hover:ring-purple-600" />
-                  <button className="h-8 w-8 rounded-full bg-pink-600 ring-offset-2 ring-transparent hover:ring-pink-600" />
-                  <button className="h-8 w-8 rounded-full bg-amber-600 ring-offset-2 ring-transparent hover:ring-amber-600" />
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <Button className="gap-2">
-                  <Save className="h-4 w-4" />
-                  Save Preferences
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Integrations Settings */}
-        <TabsContent value="integrations">
-          <Card>
-            <CardHeader>
-              <CardTitle>Integrations</CardTitle>
-              <CardDescription>Connect with third-party services</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { name: 'Slack', description: 'Receive notifications in Slack', connected: true },
-                { name: 'GitHub', description: 'Connect your repositories', connected: false },
-                { name: 'Stripe', description: 'Process payments', connected: false },
-                { name: 'Google Analytics', description: 'Track website analytics', connected: true },
-              ].map((integration) => (
-                <div key={integration.name} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded bg-muted">
-                      <Globe className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{integration.name}</p>
-                      <p className="text-sm text-muted-foreground">{integration.description}</p>
-                    </div>
-                  </div>
-                  <Button 
-                    variant={integration.connected ? 'outline' : 'default'}
-                  >
-                    {integration.connected ? 'Disconnect' : 'Connect'}
-                  </Button>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </Card>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
     </div>
   )
+}
+
+function displayName(name: string | undefined): string {
+  if (!name) return 'Workspace User'
+  return name
 }

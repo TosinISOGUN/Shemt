@@ -37,6 +37,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
+import { analytics } from '@/services/analyticsService'
 
 const DASHBOARD_SCREENSHOT = 'https://v3b.fal.media/files/b/0a91fdfb/hF0WHnEvu0FUjBnoyH3fk_VioEW37q.png'
 
@@ -202,7 +203,12 @@ export function LandingPage() {
                   <Button variant="ghost">Log in</Button>
                 </Link>
                 <Link to="/signup">
-                  <Button className="shadow-lg shadow-primary/20">Get Started</Button>
+                  <Button 
+                    className="shadow-lg shadow-primary/20"
+                    onClick={() => analytics.track('cta_click', { location: 'header', label: 'Get Started' })}
+                  >
+                    Get Started
+                  </Button>
                 </Link>
               </>
             )}
@@ -362,12 +368,21 @@ export function LandingPage() {
               <div className="mt-10 flex flex-col items-center">
                 <div className="flex flex-col sm:flex-row justify-center gap-4 w-full">
                   <Link to="/signup">
-                    <Button size="lg" className="h-12 px-8 text-lg gap-2 shadow-xl shadow-primary/20 w-full sm:w-auto">
+                    <Button 
+                      size="lg" 
+                      className="h-12 px-8 text-lg gap-2 shadow-xl shadow-primary/20 w-full sm:w-auto"
+                      onClick={() => analytics.track('cta_click', { location: 'hero', label: 'Get Started Free' })}
+                    >
                       Get Started Free
                       <ArrowRight className="h-5 w-5" />
                     </Button>
                   </Link>
-                  <Button size="lg" variant="outline" className="h-12 px-8 text-lg w-full sm:w-auto bg-background/50 backdrop-blur-md">
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="h-12 px-8 text-lg w-full sm:w-auto bg-background/50 backdrop-blur-md"
+                    onClick={() => analytics.track('cta_click', { location: 'hero', label: 'Watch Demo' })}
+                  >
                     Watch Demo
                   </Button>
                 </div>
@@ -598,7 +613,11 @@ export function LandingPage() {
             <div className="flex justify-center items-center gap-4 mb-16">
               <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
               <button 
-                onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
+                onClick={() => {
+                  const newCycle = billingCycle === 'monthly' ? 'yearly' : 'monthly';
+                  setBillingCycle(newCycle);
+                  analytics.track('billing_cycle_toggle', { cycle: newCycle });
+                }}
                 className="relative w-12 h-6 rounded-full bg-muted border border-border p-1 transition-colors hover:border-primary/50"
               >
                 <motion.div 
@@ -668,6 +687,11 @@ export function LandingPage() {
                       <Button 
                         className="w-full h-12 text-md" 
                         variant={plan.popular ? 'default' : 'outline'}
+                        onClick={() => analytics.track('plan_selection_click', { 
+                          plan: plan.name, 
+                          billingCycle,
+                          price: billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice
+                        })}
                       >
                         {plan.cta}
                       </Button>
@@ -702,7 +726,12 @@ export function LandingPage() {
                 Join 5,000+ companies already using Shemt.
               </p>
               <Link to="/signup">
-                <Button size="lg" variant="secondary" className="h-14 px-10 text-lg gap-2 shadow-xl hover:scale-105 transition-transform">
+                <Button 
+                  size="lg" 
+                  variant="secondary" 
+                  className="h-14 px-10 text-lg gap-2 shadow-xl hover:scale-105 transition-transform"
+                  onClick={() => analytics.track('cta_click', { location: 'footer', label: 'Create Free Account' })}
+                >
                   Create Free Account
                   <ArrowRight className="h-5 w-5" />
                 </Button>

@@ -9,7 +9,7 @@
  * - Navigation to signup/forgot-password
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { BarChart3, Loader2, Mail, Lock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -48,6 +48,14 @@ export function LoginPage() {
       setLoading(false)
     }
   }
+
+  // Redirect if already logged in
+  const { user, loading: authLoading } = useAuth()
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate({ to: '/dashboard' })
+    }
+  }, [user, authLoading, navigate])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">

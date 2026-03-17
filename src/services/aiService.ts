@@ -5,9 +5,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client'
-import { blink } from '@/lib/blink'
 
-const AI_FUNCTION_URL = 'https://os6b99g8--ai-insights.functions.blink.new'
 
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system'
@@ -49,9 +47,9 @@ RECENT ACTIVITY (LATEST 20 EVENTS):
 ${events?.map(e => `- ${new Date(e.created_at).toLocaleDateString()}: ${e.event_type} = ${e.value}`).join('\n') || 'No recent activity.'}
     `.trim()
 
-    // 4. Call Edge Function
+    // 4. Call Supabase Edge Function
     try {
-      const response = await blink.functions.invoke('ai-insights', {
+      const { data, error } = await supabase.functions.invoke('ai-insights', {
         body: {
           question,
           dataSummary,
@@ -59,11 +57,9 @@ ${events?.map(e => `- ${new Date(e.created_at).toLocaleDateString()}: ${e.event_
         }
       })
 
-      if ((response as any).error) {
-        throw new Error((response as any).error)
-      }
+      if (error) throw error
 
-      return (response as any).answer
+      return data.answer
     } catch (error: any) {
       console.error('AI Service Error:', error)
       throw new Error(error.message || 'Failed to get AI response')

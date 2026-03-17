@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/button'
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
+  DropdownMenuGroup,
   DropdownMenuItem, 
   DropdownMenuLabel, 
   DropdownMenuSeparator, 
@@ -73,7 +74,8 @@ export function TopNavbar({ onMenuClick, sidebarCollapsed }: TopNavbarProps) {
     <header 
       className={cn(
         "fixed top-0 right-0 z-30 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300",
-        sidebarCollapsed ? "left-[72px]" : "left-[260px]"
+        "left-0 lg:left-[260px]",
+        sidebarCollapsed && "lg:left-[72px]"
       )}
     >
       <div className="flex h-full items-center justify-between px-6">
@@ -129,45 +131,48 @@ export function TopNavbar({ onMenuClick, sidebarCollapsed }: TopNavbarProps) {
 
           {/* User Menu */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className="flex items-center gap-2 px-2 hover:bg-muted"
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                ) : (
-                  <>
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                        {getInitials(user?.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden text-sm font-medium md:inline-block">
-                      {displayName}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </>
-                )}
-              </Button>
+            <DropdownMenuTrigger 
+              className={cn(
+                "flex items-center gap-2 px-2 hover:bg-muted rounded-md h-9 text-sm font-medium transition-colors outline-none focus:bg-muted",
+                loading && "opacity-50 pointer-events-none"
+              )}
+            >
+              {loading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                      {getInitials(user?.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden text-sm font-medium md:inline-block">
+                    {displayName}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </>
+              )}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">{displayEmail}</p>
-                </div>
-              </DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{displayName}</p>
+                    <p className="text-xs text-muted-foreground">{displayEmail}</p>
+                  </div>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate({ to: '/dashboard/settings' })}>
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate({ to: '/dashboard/settings' })}>
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </DropdownMenuItem>
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => navigate({ to: '/dashboard/settings' })}>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate({ to: '/dashboard/settings' })}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={handleLogout}

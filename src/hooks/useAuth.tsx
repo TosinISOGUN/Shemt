@@ -35,59 +35,108 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   // Fetch user profile from users table
-  const fetchUserProfile = async (userId: string): Promise<AppUser | null> => {
+  const fetchUserProfile = async (userId: string, email?: string, name?: string): Promise<AppUser | null> => {
+    console.log(`AuthProvider: [Profile] Fetching for ${userId}...`)
     try {
-      const { data, error } = await supabase
+      // Add a 3-second timeout to the database query itself
+      const fetchPromise = supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile Query Timeout')), 3000)
+      )
+
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any
 
       if (error) {
-        console.error('Error fetching user profile:', error)
-        return null
+        console.warn('AuthProvider: [Profile] Not found or error:', error.message)
+        return {
+          id: userId,
+          email: email || '',
+          name: name || 'User',
+          plan: 'free',
+          created_at: new Date().toISOString()
+        } as AppUser
       }
 
+      console.log('AuthProvider: [Profile] Successfully fetched.')
       return data as AppUser
-    } catch (error) {
-      console.error('Error fetching user profile:', error)
-      return null
+    } catch (error: any) {
+      console.warn('AuthProvider: [Profile] Fallback triggered due to:', error.message)
+      return {
+        id: userId,
+        email: email || '',
+        name: name || 'User',
+        plan: 'free',
+        created_at: new Date().toISOString()
+      } as AppUser
     }
   }
 
   // Initialize auth state
   useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      if (loading) {
+        console.warn('AuthProvider: Loading safety timeout triggered.')
+        setLoading(false)
+      }
+    }, 6000)
+
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('getSession Timeout')), 4000));
+        
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
         
         if (session?.user) {
           setSession(session)
-          const profile = await fetchUserProfile(session.user.id)
+          const profile = await fetchUserProfile(
+            session.user.id, 
+            session.user.email,
+            session.user.user_metadata?.name
+          )
           setUser(profile)
         }
-      } catch (error) {
-        console.error('Error initializing auth:', error)
+      } catch (error: any) {
+        console.error('AuthProvider: Initialization error:', error.message)
       } finally {
         setLoading(false)
+        clearTimeout(safetyTimer)
       }
     }
 
     initializeAuth()
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session)
         
         if (session?.user) {
-          const profile = await fetchUserProfile(session.user.id)
+          // Set skeleton user immediately
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.name || 'User',
+            plan: 'free',
+            created_at: new Date().toISOString()
+          } as AppUser)
+
+          setLoading(false)
+
+          const profile = await fetchUserProfile(
+            session.user.id,
+            session.user.email,
+            session.user.user_metadata?.name
+          )
           setUser(profile)
         } else {
           setUser(null)
+          setLoading(false)
         }
-        
-        setLoading(false)
       }
     )
 

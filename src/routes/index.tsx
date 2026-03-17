@@ -20,7 +20,8 @@ import {
   createRootRoute, 
   createRoute,
   Outlet,
-  redirect
+  redirect,
+  ScrollRestoration
 } from '@tanstack/react-router'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 
@@ -37,10 +38,17 @@ import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 
 // Import auth hook for route protection
 import { useAuth } from '@/hooks/useAuth'
+import { ScrollToTop } from '@/components/ScrollToTop'
 
 // Root route
 const rootRoute = createRootRoute({
-  component: () => <Outlet />,
+  component: () => (
+    <>
+      <ScrollRestoration />
+      <ScrollToTop />
+      <Outlet />
+    </>
+  ),
 })
 
 // Auth routes (public - no protection needed)
