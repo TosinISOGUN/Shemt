@@ -205,17 +205,138 @@ export function SettingsPage() {
                 </div>
               )}
 
-              {/* Other tabs with minimal consistent styling */}
-              {['notifications', 'billing', 'appearance'].includes(activeTab) && (
-                <Card className="border-border/50 bg-card/50 backdrop-blur-sm min-h-[400px] flex items-center justify-center border-dashed border-2">
-                  <div className="text-center space-y-4">
-                    <Palette className="h-12 w-12 text-muted-foreground mx-auto opacity-20" />
-                    <div className="space-y-1">
-                      <h3 className="text-xl font-bold capitalize">{activeTab} Controls</h3>
-                      <p className="text-muted-foreground">Enhanced {activeTab} settings are being finalized.</p>
-                    </div>
-                  </div>
-                </Card>
+              {activeTab === 'notifications' && (
+                <div className="space-y-6">
+                  <header>
+                    <h2 className="text-2xl font-bold">Notifications</h2>
+                    <p className="text-sm text-muted-foreground">Manage how you receive updates and alerts.</p>
+                  </header>
+                  <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                    <CardContent className="p-8 space-y-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label className="text-base font-bold">Email Alerts</Label>
+                            <p className="text-sm text-muted-foreground">Receive real-time alerts for critical events.</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between border-t border-border/50 pt-4">
+                          <div className="space-y-0.5">
+                            <Label className="text-base font-bold">Weekly Digest</Label>
+                            <p className="text-sm text-muted-foreground">Summarized report of your analytics every Monday.</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between border-t border-border/50 pt-4">
+                          <div className="space-y-0.5">
+                            <Label className="text-base font-bold">Product Updates</Label>
+                            <p className="text-sm text-muted-foreground">Stay informed about new features and improvements.</p>
+                          </div>
+                          <Switch />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {activeTab === 'billing' && (
+                <div className="space-y-6">
+                  <header>
+                    <h2 className="text-2xl font-bold">Billing & Plan</h2>
+                    <p className="text-sm text-muted-foreground">Manage your subscription and payment methods.</p>
+                  </header>
+                  <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                    <CardContent className="p-8 space-y-6">
+                      <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-2xl p-6">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-primary text-primary-foreground">Pro Plan</Badge>
+                            <span className="text-sm text-muted-foreground font-medium">$29/month</span>
+                          </div>
+                          <p className="text-sm font-medium">Your next billing date is April 23, 2026.</p>
+                        </div>
+                        <Button variant="outline" className="rounded-full h-10 px-6 border-primary/30 text-primary hover:bg-primary/5">
+                          Manage Subscription
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Recent Invoices</h3>
+                        <div className="border border-border/50 rounded-xl overflow-hidden">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-muted/30">
+                                <th className="text-left p-3 font-semibold">Date</th>
+                                <th className="text-left p-3 font-semibold">Amount</th>
+                                <th className="text-left p-3 font-semibold">Status</th>
+                                <th className="text-right p-3 font-semibold">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="border-t border-border/50">
+                                <td className="p-3">Mar 23, 2026</td>
+                                <td className="p-3 font-medium">$29.00</td>
+                                <td className="p-3"><Badge variant="outline" className="text-[10px] uppercase bg-green-500/10 text-green-500 border-green-500/20">Paid</Badge></td>
+                                <td className="p-3 text-right"><Button variant="ghost" size="sm" className="h-7 text-xs">Download</Button></td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {activeTab === 'appearance' && (
+                <div className="space-y-6">
+                  <header>
+                    <h2 className="text-2xl font-bold">Appearance</h2>
+                    <p className="text-sm text-muted-foreground">Customize your workspace look and feel.</p>
+                  </header>
+                  <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                    <CardContent className="p-8 space-y-8">
+                      <div className="space-y-4">
+                        <Label className="text-base font-bold">Theme Mode</Label>
+                        <div className="grid grid-cols-3 gap-4">
+                          {[
+                            { id: 'light', label: 'Light', icon: Globe },
+                            { id: 'dark', label: 'Dark', icon: Lock },
+                            { id: 'system', label: 'System', icon: Laptop }
+                          ].map((theme) => (
+                            <button
+                              key={theme.id}
+                              className={cn(
+                                "flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all",
+                                theme.id === 'dark' 
+                                  ? "border-primary bg-primary/5" 
+                                  : "border-border/50 hover:border-border"
+                              )}
+                            >
+                              <div className={cn(
+                                "h-12 w-12 rounded-full flex items-center justify-center",
+                                theme.id === 'dark' ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                              )}>
+                                <theme.icon className="h-6 w-6" />
+                              </div>
+                              <span className="text-sm font-semibold">{theme.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between border-t border-border/50 pt-6">
+                        <div className="space-y-0.5">
+                          <Label className="text-base font-bold">Compact Mode</Label>
+                          <p className="text-sm text-muted-foreground">Use a denser layout for the dashboard.</p>
+                        </div>
+                        <Switch />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               )}
             </motion.div>
           </AnimatePresence>

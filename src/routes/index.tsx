@@ -81,6 +81,8 @@ const landingRoute = createRoute({
   component: LandingPage,
 })
 
+import { SetupPage } from '@/pages/dashboard/SetupPage'
+
 // Dashboard layout route (protected)
 const dashboardLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -107,6 +109,12 @@ const analyticsRoute = createRoute({
   component: AnalyticsPage,
 })
 
+const setupRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: 'setup/$projectId',
+  component: SetupPage,
+})
+
 const billingRoute = createRoute({
   getParentRoute: () => dashboardLayoutRoute,
   path: 'billing',
@@ -129,6 +137,7 @@ const routeTree = rootRoute.addChildren([
     dashboardIndexRoute,
     usersRoute,
     analyticsRoute,
+    setupRoute,
     billingRoute,
     settingsRoute,
   ]),

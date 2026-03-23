@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS public.users (
     name TEXT NOT NULL,
     plan TEXT DEFAULT 'free' NOT NULL,
     avatar_url TEXT,
+    paystack_customer_code TEXT,
+    paystack_subscription_code TEXT,
+    subscription_status TEXT,
+    subscription_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -22,7 +26,32 @@ CREATE POLICY "Users can see their own profile" ON public.users
     FOR SELECT USING (auth.uid() = id);
 
 CREATE POLICY "Users can update their own profile" ON public.users
-    FOR UPDATE USING (auth.uid() = id);
+    FOR UPDATE USING (auth.uid() = id)
+    WITH CHECK (
+        (auth.uid() = id) AND 
+        (plan = (SELECT plan FROM public.users WHERE id = auth.uid()))
+    );
+
+-- Trigger to protect plan and subscription fields from manual updates
+CREATE OR REPLACE FUNCTION public.protect_subscription_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (TG_OP = 'UPDATE') THEN
+    -- Only allow the service role (used by Edge Functions) to change these fields
+    IF (current_setting('role') <> 'service_role') THEN
+      NEW.plan := OLD.plan;
+      NEW.paystack_customer_code := OLD.paystack_customer_code;
+      NEW.paystack_subscription_code := OLD.paystack_subscription_code;
+      NEW.subscription_status := OLD.subscription_status;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_user_update_protect_plan
+  BEFORE UPDATE ON public.users
+  FOR EACH ROW EXECUTE PROCEDURE public.protect_subscription_fields();
 
 -- Trigger Function for User Creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()

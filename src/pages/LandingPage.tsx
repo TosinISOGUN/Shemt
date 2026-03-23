@@ -128,9 +128,9 @@ const plans = [
   },
   {
     name: 'Pro',
-    monthlyPrice: '$5',
-    yearlyPrice: '$4',
-    subPrice: '₦7,500',
+    monthlyPrice: '$0.10',
+    yearlyPrice: '$0.08',
+    subPrice: '₦100',
     description: 'For growing startups',
     features: ['Up to 100k events', 'AI Analytics Assistant', 'Priority support', 'Custom alerts'],
     cta: 'Start Free Trial',

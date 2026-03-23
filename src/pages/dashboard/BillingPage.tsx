@@ -1,178 +1,207 @@
-/**
- * BillingPage - Billing and payments page
- */
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import React, { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { 
   CreditCard, 
-  CheckCircle2, 
-  Clock,
-  Download,
-  Sparkles
+  Check, 
+  Zap, 
+  Shield, 
+  Crown,
+  History,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+  ChevronLeft
 } from 'lucide-react'
+import { usePaystackPayment } from 'react-paystack'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
 
-const plans = [
-  {
-    name: 'Starter',
-    price: '$29',
-    period: '/month',
-    description: 'Perfect for small teams',
-    features: ['Up to 5 users', '10GB storage', 'Basic analytics', 'Email support'],
-    current: false,
-  },
-  {
-    name: 'Professional',
-    price: '$79',
-    period: '/month',
-    description: 'For growing businesses',
-    features: ['Up to 20 users', '100GB storage', 'Advanced analytics', 'Priority support', 'API access'],
-    current: true,
-  },
-  {
-    name: 'Enterprise',
-    price: '$199',
-    period: '/month',
-    description: 'For large organizations',
-    features: ['Unlimited users', 'Unlimited storage', 'Custom analytics', '24/7 support', 'API access', 'Custom integrations'],
-    current: false,
-  },
-]
+import { toast } from 'sonner'
 
-const invoices = [
-  { id: 'INV-001', date: 'Mar 1, 2024', amount: '$79.00', status: 'paid' },
-  { id: 'INV-002', date: 'Feb 1, 2024', amount: '$79.00', status: 'paid' },
-  { id: 'INV-003', date: 'Jan 1, 2024', amount: '$79.00', status: 'paid' },
-  { id: 'INV-004', date: 'Dec 1, 2023', amount: '$79.00', status: 'paid' },
-]
+const PRO_PLAN_CODE = 'PLN_9zhunyv04d9bt5i'
+const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || ''
 
 export function BillingPage() {
+  const { user } = useAuth()
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) return
+      const { data } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      
+      if (data) setProfile(data)
+      setLoading(false)
+    }
+    fetchProfile()
+  }, [user])
+
+  const config = {
+    reference: (new Date()).getTime().toString(),
+    email: user?.email || '',
+    amount: 10000, // Amount in kobo (100 NGN)
+    publicKey: PAYSTACK_PUBLIC_KEY,
+    plan: PRO_PLAN_CODE,
+  }
+
+  // @ts-ignore
+  const initializePayment = usePaystackPayment(config)
+
+  const onSuccess = (reference: any) => {
+    console.log('Payment successful!', reference)
+    toast.success('Subscription successful! Upgrading your account...')
+    // Webhook will update database, but we refresh for visibility
+    setTimeout(() => {
+      window.location.reload()
+    }, 2000)
+  }
+
+  const onClose = () => {
+    console.log('Payment modal closed')
+  }
+
+  const handleUpgrade = () => {
+    if (!PAYSTACK_PUBLIC_KEY) {
+      alert('Paystack Public Key not found in environment variables.')
+      return
+    }
+    // @ts-ignore
+    initializePayment(onSuccess, onClose)
+  }
+
+  if (loading) return (
+    <div className="h-[80vh] flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+    </div>
+  )
+
+  const isPro = profile?.plan === 'pro'
+
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Billing</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your subscription and billing information.
-        </p>
+    <div className="max-w-5xl mx-auto py-10 px-4 sm:px-6">
+      <div className="mb-10">
+        <h1 className="text-4xl font-black tracking-tight mb-2 italic">Billing & Subscription</h1>
+        <p className="text-muted-foreground font-medium text-lg">Manage your workspace plan and payment methods.</p>
       </div>
 
-      {/* Current Plan */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Current Plan
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Left Column: Current Plan Status */}
+        <Card className="md:col-span-2 border-border/40 bg-card/20 backdrop-blur-xl rounded-2xl overflow-hidden shadow-xl">
+           <CardHeader className="p-8 border-b border-border/20 bg-primary/5">
+              <div className="flex items-center justify-between mb-4">
+                 <Badge variant={isPro ? "default" : "secondary"} className="rounded-full px-4 py-1 font-black uppercase tracking-tighter italic">
+                    {isPro ? 'Pro Active' : 'Free Plan'}
+                 </Badge>
+                 <CreditCard className="h-5 w-5 text-primary/40" />
+              </div>
+              <CardTitle className="text-3xl font-black italic">
+                {isPro ? 'Shemt Professional' : 'Shemt Basic'}
               </CardTitle>
-              <CardDescription>You are currently on the Professional plan</CardDescription>
-            </div>
-            <Badge className="bg-primary text-primary-foreground">Active</Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-3xl font-bold">$79<span className="text-sm font-normal text-muted-foreground">/month</span></p>
-              <p className="text-sm text-muted-foreground mt-1">Next billing date: April 1, 2024</p>
-            </div>
-            <Button>Upgrade Plan</Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Plans */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {plans.map((plan) => (
-          <Card 
-            key={plan.name} 
-            className={`transition-all hover:shadow-lg ${plan.current ? 'border-primary ring-2 ring-primary/20' : ''}`}
-          >
-            <CardHeader>
-              <CardTitle>{plan.name}</CardTitle>
-              <CardDescription>{plan.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <span className="text-3xl font-bold">{plan.price}</span>
-                <span className="text-muted-foreground">{plan.period}</span>
+              <CardDescription className="text-base font-medium">
+                {isPro 
+                  ? 'Your professional subscription is active and renewing.' 
+                  : 'You are currently using our free tier with limited capacity.'}
+              </CardDescription>
+           </CardHeader>
+           <CardContent className="p-8 space-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                 <div className="p-5 rounded-2xl bg-secondary/10 border border-primary/5 space-y-2">
+                    <p className="text-xs font-black uppercase text-primary/60 tracking-widest">Billing Interval</p>
+                    <p className="text-lg font-bold">Monthly</p>
+                 </div>
+                 <div className="p-5 rounded-2xl bg-secondary/10 border border-primary/5 space-y-2">
+                    <p className="text-xs font-black uppercase text-primary/60 tracking-widest">Next Invoice</p>
+                    <p className="text-lg font-bold">{isPro ? 'Next billing cycle' : '—'}</p>
+                 </div>
               </div>
-              <ul className="space-y-2">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button 
-                variant={plan.current ? 'outline' : 'default'} 
-                className="w-full"
-                disabled={plan.current}
-              >
-                {plan.current ? 'Current Plan' : 'Switch Plan'}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
-      {/* Payment Method */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment Method</CardTitle>
-          <CardDescription>Manage your payment methods</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-16 items-center justify-center rounded bg-muted">
-                <CreditCard className="h-5 w-5" />
+              <div className="space-y-4">
+                 <h4 className="font-black text-sm uppercase tracking-widest text-muted-foreground">Plan Features</h4>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      'Up to 100k events',
+                      'AI Analytics Assistant',
+                      'Priority support',
+                      'Custom alerts',
+                      'Real-time data ingestion',
+                      'Up to 10 projects'
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className={cn(
+                          "h-5 w-5 rounded-full flex items-center justify-center shrink-0",
+                          isPro ? "bg-emerald-500/20 text-emerald-400" : "bg-primary/10 text-primary/40"
+                        )}>
+                          <Check className="h-3 w-3" />
+                        </div>
+                        <span className="text-sm font-medium">{feature}</span>
+                      </div>
+                    ))}
+                 </div>
               </div>
-              <div>
-                <p className="font-medium">Visa ending in 4242</p>
-                <p className="text-sm text-muted-foreground">Expires 12/2025</p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm">Edit</Button>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Invoices */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Billing History</CardTitle>
-          <CardDescription>View and download your invoices</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {invoices.map((invoice) => (
-              <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">{invoice.id}</p>
-                    <p className="text-sm text-muted-foreground">{invoice.date}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <p className="font-medium">{invoice.amount}</p>
-                  <Badge variant="secondary" className="gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    {invoice.status}
-                  </Badge>
-                  <Button variant="ghost" size="icon">
-                    <Download className="h-4 w-4" />
+              {!isPro && (
+                <div className="pt-4">
+                  <Button 
+                    size="lg" 
+                    className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-xl italic shadow-2xl shadow-primary/20 transition-all active:scale-95 group"
+                    onClick={handleUpgrade}
+                  >
+                    Upgrade to Pro — ₦100/mo
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
+                  <p className="text-center text-[10px] uppercase font-bold text-muted-foreground tracking-widest mt-4 flex items-center justify-center gap-2">
+                    <Shield className="h-3 w-3" />
+                    Secure payment via Paystack
+                  </p>
                 </div>
+              )}
+           </CardContent>
+        </Card>
+
+        {/* Right Column: Mini Stats/Actions */}
+        <div className="space-y-6">
+           <div className="p-8 rounded-3xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-2xl space-y-6 relative overflow-hidden group">
+              <Crown className="absolute -top-6 -right-6 h-32 w-32 opacity-10 group-hover:rotate-12 transition-transform duration-700" />
+              <div className="space-y-2 relative z-10">
+                 <Zap className="h-8 w-8 text-white fill-white/20" />
+                 <h3 className="text-2xl font-black italic leading-tight">Unlock Unlimited Insights</h3>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <p className="text-primary-foreground/80 text-sm font-medium leading-relaxed relative z-10">
+                Get more from your data with advanced heatmaps, custom attributes, and export functionality.
+              </p>
+           </div>
+
+           <Card className="border-border/40 bg-card/20 backdrop-blur-xl rounded-2xl overflow-hidden shadow-xl">
+              <CardHeader className="p-6 border-b border-border/20">
+                 <CardTitle className="text-lg font-black italic flex items-center gap-2">
+                    <History className="h-5 w-5 text-primary" />
+                    Billing History
+                 </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                 {isPro ? (
+                   <div className="space-y-4 text-center py-4">
+                      <p className="text-sm text-muted-foreground">History is being generated for your recurring payments.</p>
+                   </div>
+                 ) : (
+                   <div className="flex flex-col items-center justify-center py-6 text-center space-y-3 opacity-40">
+                      <AlertCircle className="h-8 w-8" />
+                      <p className="text-xs font-bold uppercase tracking-widest">No transaction history</p>
+                   </div>
+                 )}
+              </CardContent>
+           </Card>
+        </div>
+      </div>
     </div>
   )
 }

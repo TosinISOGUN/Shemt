@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Link } from '@tanstack/react-router'
 import { 
   Card, 
   CardContent, 
@@ -13,7 +14,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { 
   Select,
   SelectContent,
@@ -21,6 +22,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { 
   LineChart, 
   Line, 
@@ -45,7 +57,7 @@ import {
   Zap, 
   Plus,
   Filter,
-  Calendar,
+  Calendar as CalendarIcon,
   ChevronRight,
   TrendingUp,
   TrendingDown,
@@ -53,11 +65,27 @@ import {
   ShieldCheck,
   MousePointer2,
   Clock,
-  Target
+  Target,
+  Code2,
+  Eye,
+  EyeOff,
+  Copy,
+  Check
 } from 'lucide-react'
+import { toast } from "sonner"
 import { cn } from '@/lib/utils'
 import { analyticsService } from '@/services/analyticsService'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase/client'
+import { format } from "date-fns"
+import { type DateRange } from "react-day-picker"
+import { 
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 
 // --- Types ---
 interface KpiData {
@@ -143,30 +171,140 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 }
 
+const CreateProjectDialog = ({ onCreated }: { onCreated: (project: any) => void }) => {
+  const { user } = useAuth()
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleCreate = async () => {
+    if (!user?.id || !name.trim()) return
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({ name, user_id: user.id })
+        .select()
+        .single()
+      
+      if (error) throw error
+      if (data) {
+        onCreated(data)
+        setOpen(false)
+        setName('')
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={
+        <Button className="gap-2 shadow-lg shadow-primary/20">
+          <Plus className="h-4 w-4" />
+          Add Project
+        </Button>
+      } />
+      <DialogContent className="sm:max-w-[425px] bg-card border-border/40">
+        <DialogHeader>
+          <DialogTitle>Create Project</DialogTitle>
+          <DialogDescription>
+            Enter a name for your new analytics project.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Project Name</Label>
+            <Input
+              id="name"
+              placeholder="My Awesome App"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="bg-muted/20 border-border/20"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={handleCreate} disabled={loading || !name.trim()}>
+            {loading ? 'Creating...' : 'Create Project'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+
+
 export function AnalyticsPage() {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [projects, setProjects] = useState<any[]>([])
+  const [selectedProject, setSelectedProject] = useState<string | null>(null)
+  const [selectedProjectData, setSelectedProjectData] = useState<any>(null)
   const [metrics, setMetrics] = useState<any>(null)
   const [revenueTrend, setRevenueTrend] = useState<any[]>([])
   const [userGrowth, setUserGrowth] = useState<any[]>([])
   const [funnelData, setFunnelData] = useState<any[]>([])
   const [insights, setInsights] = useState<string[]>([])
   const [activity, setActivity] = useState<any[]>([])
-  const [dateRange, setDateRange] = useState('7d')
+  const [highlights, setHighlights] = useState<any>(null)
+  const [dateRange, setDateRange] = useState('30d')
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined)
+  const [showProjectId, setShowProjectId] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [segment, setSegment] = useState('all')
   const [eventCluster, setEventCluster] = useState('all')
 
+  // 1. Fetch Projects for the user
+  useEffect(() => {
+    async function fetchProjects() {
+      if (!user?.id) return
+      
+      const { data } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (data && data.length > 0) {
+        setProjects(data)
+        const active = data[0]
+        setSelectedProject(active.id)
+        setSelectedProjectData(active)
+      } else {
+        setLoading(false)
+      }
+    }
+    fetchProjects()
+  }, [user?.id])
+
+  // 2. Load Data for the selected project
   useEffect(() => {
     async function loadData() {
+      if (!selectedProject) return
+      
       setLoading(true)
       try {
-        // In a real app, segment and eventCluster would be passed to these service calls
-        const [m, rt, ug, fd, ins, act] = await Promise.all([
-          analyticsService.getDashboardMetrics(),
-          analyticsService.getRevenueTrend(),
-          analyticsService.getUserGrowth(),
-          analyticsService.getConversionFunnel(),
+        const options = { 
+          dateRange, 
+          segment, 
+          eventCluster,
+          startDate: (dateRange === 'custom' && customRange?.from && customRange?.to) ? customRange.from.toISOString() : undefined,
+          endDate: (dateRange === 'custom' && customRange?.from && customRange?.to) ? customRange.to.toISOString() : undefined
+        }
+        const [m, rt, ug, fd, ins, act, hl] = await Promise.all([
+          analyticsService.getDashboardMetrics(selectedProject, options),
+          analyticsService.getRevenueTrend(selectedProject, options),
+          analyticsService.getUserGrowth(selectedProject, options),
+          analyticsService.getConversionFunnel(selectedProject, options),
           analyticsService.getAiInsights(),
-          analyticsService.getRecentActivity()
+          analyticsService.getRecentActivity(selectedProject),
+          analyticsService.getAnalyticsHighlights(selectedProject, options)
         ])
         setMetrics(m)
         setRevenueTrend(rt)
@@ -174,12 +312,13 @@ export function AnalyticsPage() {
         setFunnelData(fd)
         setInsights(ins)
         setActivity(act)
+        setHighlights(hl)
       } finally {
         setLoading(false)
       }
     }
     loadData()
-  }, [dateRange, segment, eventCluster])
+  }, [selectedProject, dateRange, segment, eventCluster, customRange])
 
   return (
     <motion.div
@@ -191,11 +330,116 @@ export function AnalyticsPage() {
       {/* 1. Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-1">
         <div className="space-y-1">
-          <h1 className="text-4xl font-black tracking-tight text-foreground">Analytics</h1>
-          <p className="text-muted-foreground font-medium">Insights and growth metrics for Shemt</p>
+           <div className="flex items-center gap-3">
+            <h1 className="text-4xl font-black tracking-tight text-foreground">Analytics</h1>
+            {projects.length > 0 && (
+              <Select 
+                value={selectedProject || ''} 
+                onValueChange={(val) => {
+                  setSelectedProject(val)
+                  setSelectedProjectData(projects.find(p => p.id === val))
+                }}
+              >
+                <SelectTrigger className="w-[200px] h-9 bg-muted/40 border-border/40 font-bold">
+                  <span className="truncate">{selectedProjectData?.name || 'Select Project'}</span>
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border/40">
+                  {projects.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                 </SelectContent>
+               </Select>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <p className="text-muted-foreground font-medium">Real-time performance metrics</p>
+            {selectedProject && (
+              <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-muted/30 border border-border/20 group hover:border-primary/30 transition-all">
+                <div className="flex items-center gap-1.5 pr-2 border-r border-border/20">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Live</span>
+                </div>
+                
+                <span className="text-[10px] font-mono text-muted-foreground min-w-[120px]">
+                  {showProjectId ? selectedProject : `${selectedProject.substring(0, 8)}...••••`}
+                </span>
+
+                <div className="flex items-center gap-0.5 ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 hover:bg-primary/10 hover:text-primary"
+                    title={showProjectId ? "Hide ID" : "Show ID"}
+                    onClick={() => setShowProjectId(!showProjectId)}
+                  >
+                    {showProjectId ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 hover:bg-primary/10 hover:text-primary"
+                    title="Copy ID"
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedProject)
+                      setCopied(true)
+                      toast.success("Project ID copied!")
+                      setTimeout(() => setCopied(false), 2000)
+                    }}
+                  >
+                    {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="flex items-center gap-3">
+          {selectedProjectData && (
+            <Link 
+              to="/dashboard/setup/$projectId" 
+              params={{ projectId: selectedProjectData.id }}
+              className={cn(buttonVariants({ variant: "outline" }), "gap-2 h-10 border-border/60 hover:bg-muted/50")}
+            >
+              <Code2 className="h-4 w-4 text-primary" />
+              <span>Tracking Setup</span>
+            </Link>
+          )}
+
+          {projects.length > 0 && (
+            <CreateProjectDialog onCreated={(p) => {
+              setProjects([p, ...projects])
+              setSelectedProject(p.id)
+              setSelectedProjectData(p)
+            }} />
+          )}
+
+          {projects.length === 0 && !loading && (
+            <CreateProjectDialog onCreated={(p) => {
+              setProjects([p])
+              setSelectedProject(p.id)
+              setSelectedProjectData(p)
+            }} />
+          )}
+
+          {import.meta.env.DEV && projects.length > 0 && metrics?.events?.value === 0 && !loading && (
+             <Button 
+               variant="secondary" 
+               className="gap-2 h-10 text-xs"
+               onClick={async () => {
+                 if (user?.id && selectedProject) {
+                    await analyticsService.seedSampleData(user.id);
+                    // Refresh data for current project
+                    const m = await analyticsService.getDashboardMetrics(selectedProject);
+                    setMetrics(m);
+                 }
+               }}
+             >
+               <Activity className="h-4 w-4" />
+               Seed Test Data
+             </Button>
+          )}
+
           <div className="flex items-center gap-2 bg-muted/40 p-1 rounded-lg border border-border/40">
             <Button 
               variant={dateRange === '7d' ? 'secondary' : 'ghost'} 
@@ -209,23 +453,141 @@ export function AnalyticsPage() {
               onClick={() => setDateRange('30d')}
               className="text-xs h-8 px-3 rounded-md"
             >30D</Button>
-            <Button 
-              variant={dateRange === 'custom' ? 'secondary' : 'ghost'} 
-              size="sm" 
-              onClick={() => setDateRange('custom')}
-              className="text-xs h-8 px-3 rounded-md gap-2"
-            >
-              <Calendar className="h-3.5 w-3.5" />
-              Custom
-            </Button>
+
+            <Popover>
+              <PopoverTrigger render={
+                <Button 
+                  variant={dateRange === 'custom' ? 'secondary' : 'ghost'} 
+                  size="sm" 
+                  onClick={() => setDateRange('custom')}
+                  className="text-xs h-8 px-3 rounded-md gap-2"
+                >
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  {dateRange === 'custom' && customRange?.from ? (
+                    customRange.to ? (
+                      <>
+                        {format(customRange.from, "LLL dd")} -{" "}
+                        {format(customRange.to, "LLL dd")}
+                      </>
+                    ) : (
+                      format(customRange.from, "LLL dd")
+                    )
+                  ) : (
+                    "Custom"
+                  )}
+                </Button>
+              } />
+              <PopoverContent className="w-auto p-0 border-border/40 bg-card overflow-hidden shadow-2xl" align="end shadow-xl">
+                <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-border/20">
+                  {/* Presets Sidebar */}
+                  <div className="flex flex-col p-3 bg-muted/10 min-w-[160px] space-y-1">
+                    <span className="text-[10px] font-bold text-muted-foreground px-2 pb-2 uppercase tracking-widest opacity-70">
+                      Quick Select
+                    </span>
+                    {[
+                      { label: 'Today', days: 0 },
+                      { label: 'Yesterday', days: 1 },
+                      { label: 'Last 7 Days', days: 7 },
+                      { label: 'Last 14 Days', days: 14 },
+                      { label: 'Last 30 Days', days: 30 },
+                      { label: 'This Month', type: 'month' },
+                      { label: 'Last Month', type: 'last-month' },
+                    ].map((preset) => {
+                      // Simple check for active preset (only for known days)
+                      const isActive = preset.type === 'month' ? false : false // Simplified for now
+                      
+                      return (
+                        <Button
+                          key={preset.label}
+                          variant={isActive ? "secondary" : "ghost"}
+                          size="sm"
+                          className={cn(
+                            "justify-start text-xs h-9 font-medium px-2 rounded-md transition-all",
+                            isActive ? "bg-primary/10 text-primary hover:bg-primary/20" : "hover:bg-muted/50"
+                          )}
+                          onClick={() => {
+                            const to = new Date()
+                            let from = new Date()
+                            if (preset.type === 'month') {
+                              from = new Date(to.getFullYear(), to.getMonth(), 1)
+                            } else if (preset.type === 'last-month') {
+                              from = new Date(to.getFullYear(), to.getMonth() - 1, 1)
+                              to.setDate(0) // Last day of previous month
+                            } else {
+                              from.setDate(to.getDate() - (preset.days ?? 0))
+                              if (preset.days === 1) to.setDate(to.getDate() - 1) // Yesterday range
+                            }
+                            setCustomRange({ from, to })
+                          }}
+                        >
+                          {preset.label}
+                        </Button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Calendar View Container */}
+                  <div className="flex flex-col">
+                    <div className="p-3">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={customRange?.from}
+                        selected={customRange}
+                        onSelect={(range: any) => setCustomRange(range)}
+                        numberOfMonths={1}
+                        className="rounded-none border-none"
+                      />
+                    </div>
+                    
+                    {/* Footer Actions */}
+                    <div className="flex items-center justify-between p-3 bg-muted/5 border-t border-border/20">
+                       <div className="flex flex-col gap-0.5">
+                         <span className="text-[10px] text-muted-foreground font-medium uppercase">Selected Range</span>
+                         <span className="text-[11px] font-bold text-primary">
+                           {customRange?.from ? (
+                             customRange.to ? (
+                               <>{format(customRange.from, "MMM dd")} - {format(customRange.to, "MMM dd, yyyy")}</>
+                             ) : (
+                               format(customRange.from, "MMM dd, yyyy")
+                             )
+                           ) : "Select dates"}
+                         </span>
+                       </div>
+                       <div className="flex gap-2">
+                         <Button 
+                           variant="ghost" 
+                           size="sm" 
+                           className="text-xs h-8 h-8 px-3"
+                           onClick={() => setDateRange('30d')} // Reset to 30d
+                         >
+                           Reset
+                         </Button>
+                         <Button 
+                           size="sm" 
+                           className="text-xs h-8 px-4 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
+                           onClick={() => {
+                             // This already triggers effect via state change, but we could add a "close" trigger if needed
+                             // For popover, re-clicking trigger usually closes, or we can use PopoverClose
+                           }}
+                         >
+                           Apply
+                         </Button>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           
-          <Button variant="outline" className="gap-2 h-10 border-border/60 hover:bg-muted/50">
+          <Button 
+            variant="outline" 
+            className="gap-2 h-10 border-border/60 hover:bg-muted/50"
+            onClick={() => analyticsService.exportToCsv(selectedProject || undefined)}
+          >
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Export CSV</span>
-          </Button>
-          <Button className="h-10 gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
-            Download Report
           </Button>
         </div>
       </div>
@@ -439,7 +801,7 @@ export function AnalyticsPage() {
             <CardContent className="p-4 space-y-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-0.5">Dimension</label>
-                <Select value={segment} onValueChange={setSegment}>
+                <Select value={segment} onValueChange={(val) => setSegment(val || 'all')}>
                   <SelectTrigger className="bg-muted/20 border-border/20 h-9 rounded-md text-xs">
                     <SelectValue placeholder="Select segment" />
                   </SelectTrigger>
@@ -453,7 +815,7 @@ export function AnalyticsPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-0.5">Event Cluster</label>
-                <Select value={eventCluster} onValueChange={setEventCluster}>
+                <Select value={eventCluster} onValueChange={(val) => setEventCluster(val || 'all')}>
                   <SelectTrigger className="bg-muted/20 border-border/20 h-9 rounded-md text-xs">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -480,15 +842,15 @@ export function AnalyticsPage() {
                <div className="grid grid-cols-1 divide-y divide-border/10">
                   <div className="flex items-center justify-between p-4 hover:bg-muted/10 transition-colors">
                      <span className="text-xs text-muted-foreground">Highest revenue day</span>
-                     <span className="text-xs font-bold text-foreground">Mar 16, 2024</span>
+                     <span className="text-xs font-bold text-foreground">{highlights?.highestRevenueDay || 'N/A'}</span>
                   </div>
                   <div className="flex items-center justify-between p-4 hover:bg-muted/10 transition-colors">
                      <span className="text-xs text-muted-foreground">Lowest conversion day</span>
-                     <span className="text-xs font-bold text-foreground">Mar 12, 2024</span>
+                     <span className="text-xs font-bold text-foreground">{highlights?.lowestConversionDay || 'N/A'}</span>
                   </div>
                   <div className="flex items-center justify-between p-4 hover:bg-muted/10 transition-colors">
                      <span className="text-xs text-muted-foreground">Peak activity time</span>
-                     <span className="text-xs font-bold text-foreground">11:00 AM — 2:00 PM</span>
+                     <span className="text-xs font-bold text-foreground">{highlights?.peakActivityTime || 'N/A'}</span>
                   </div>
                </div>
             </CardContent>

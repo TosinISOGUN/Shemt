@@ -69,7 +69,7 @@ export function DashboardPage() {
     refetch: refetchRevenue
   } = useQuery({
     queryKey: ['revenue-history', user?.id],
-    queryFn: () => analyticsService.getRevenueHistory(user?.id || ''),
+    queryFn: () => analyticsService.getRevenueTrend(user?.id || ''),
     enabled: !!user?.id,
   })
 
@@ -123,34 +123,34 @@ export function DashboardPage() {
   const stats = [
     {
       title: 'Total Revenue',
-      value: metrics && metrics.revenue > 0 ? `$${metrics.revenue.toLocaleString()}` : '$0',
-      change: metrics && metrics.revenue > 0 ? '+12.5%' : '0%',
-      trend: metrics && metrics.revenue > 0 ? 'up' : 'neutral',
+      value: metrics?.revenue ? `$${metrics.revenue.value.toLocaleString()}` : '$0',
+      change: metrics?.revenue ? `${metrics.revenue.change > 0 ? '+' : ''}${metrics.revenue.change}%` : '0%',
+      trend: metrics?.revenue ? (metrics.revenue.change > 0 ? 'up' : metrics.revenue.change < 0 ? 'down' : 'neutral') : 'neutral',
       icon: DollarSign,
       description: 'From last month',
       loading: isLoadingMetrics
     },
     {
       title: 'Active Users',
-      value: metrics && metrics.activeUsers > 0 ? metrics.activeUsers.toLocaleString() : '0',
-      change: metrics && metrics.activeUsers > 0 ? '+8.2%' : '0%',
-      trend: metrics && metrics.activeUsers > 0 ? 'up' : 'neutral',
+      value: metrics?.activeUsers ? metrics.activeUsers.value.toLocaleString() : '0',
+      change: metrics?.activeUsers ? `${metrics.activeUsers.change > 0 ? '+' : ''}${metrics.activeUsers.change}%` : '0%',
+      trend: metrics?.activeUsers ? (metrics.activeUsers.change > 0 ? 'up' : metrics.activeUsers.change < 0 ? 'down' : 'neutral') : 'neutral',
       icon: UsersIcon,
       description: 'From last month',
       loading: isLoadingMetrics
     },
     {
       title: 'Conversion Rate',
-      value: metrics && metrics.conversionRate > 0 ? `${metrics.conversionRate}%` : '0%',
-      change: metrics && metrics.conversionRate > 0 ? '-0.4%' : '0%',
-      trend: metrics && metrics.conversionRate > 0 ? 'down' : 'neutral',
+      value: metrics?.conversionRate ? `${metrics.conversionRate.value}%` : '0%',
+      change: metrics?.conversionRate ? `${metrics.conversionRate.change > 0 ? '+' : ''}${metrics.conversionRate.change}%` : '0%',
+      trend: metrics?.conversionRate ? (metrics.conversionRate.change > 0 ? 'up' : metrics.conversionRate.change < 0 ? 'down' : 'neutral') : 'neutral',
       icon: TrendingUp,
       description: 'From last month',
       loading: isLoadingMetrics
     },
   ]
 
-  const hasData = metrics && (metrics.revenue > 0 || metrics.activeUsers > 0)
+  const hasData = metrics && (metrics.revenue.value > 0 || metrics.activeUsers.value > 0)
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -169,7 +169,11 @@ export function DashboardPage() {
             <RefreshCw className={`h-4 w-4 ${isLoadingMetrics ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button size="sm" className="shadow-lg shadow-primary/20">
+          <Button 
+            size="sm" 
+            className="shadow-lg shadow-primary/20"
+            onClick={() => analyticsService.exportToCsv()}
+          >
             Export Data
           </Button>
         </div>
