@@ -1,79 +1,94 @@
+/**
+ * AI Insights Edge Function (Hardened)
+ * 
+ * Includes:
+ * - User-based rate limiting
+ * - Strict Zod validation
+ * - Auth token verification
+ */
+
 import { createClient } from "npm:@supabase/supabase-js";
 import OpenAI from "npm:openai";
+import { z } from "npm:zod";
 
-// CORS headers for security
+const RequestSchema = z.object({
+  question: z.string().min(5).max(500),
+  dataSummary: z.string().min(10),
+  history: z.array(z.object({
+    role: z.enum(["user", "assistant", "system"]),
+    content: z.string(),
+  })).optional(),
+});
+
+// User-based Rate Limiter (In-Memory)
+const USER_RATE_LIMITS = new Map<string, { count: number; resetAt: number }>();
+const MAX_REQUESTS_PER_WINDOW = 20;
+const WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const limit = USER_RATE_LIMITS.get(userId) || { count: 0, resetAt: now + WINDOW_MS };
+  
+  if (now > limit.resetAt) {
+    limit.count = 0;
+    limit.resetAt = now + WINDOW_MS;
+  }
+  
+  if (limit.count >= MAX_REQUESTS_PER_WINDOW) return true;
+  
+  limit.count++;
+  USER_RATE_LIMITS.set(userId, limit);
+  return false;
+}
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // Production domain restriction recommended
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 async function handler(req: Request): Promise<Response> {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
-    // 1. Fetch backend configuration from environment variables
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-
-    if (!supabaseUrl || !supabaseAnonKey || !openaiApiKey) {
-      console.error("Critical Failure: Missing environment configuration for AI Insights");
-      return new Response(
-        JSON.stringify({ error: "Service Unavailable: Backend configuration incomplete" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    // 2. Authentication: Verify the user's session token via Supabase
+    // 1. Auth Verification
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized: Access token required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Extract Bearer token
+    if (!authHeader) throw new Error("Unauthorized");
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) throw new Error("Invalid session");
 
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized: Session is invalid or expired" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // 2. Rate Limiting
+    if (checkRateLimit(user.id)) {
+      return new Response(JSON.stringify({ error: "AI limit reached for this hour. Try again later." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // 3. Request Parsing: Extract user question and data context
-    const { question, dataSummary, history = [] } = await req.json();
-
-    if (!question || !dataSummary) {
-      return new Response(
-        JSON.stringify({ error: "Bad Request: 'question' and 'dataSummary' are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // 3. Payload Validation
+    const body = await req.json();
+    const result = RequestSchema.safeParse(body);
+    if (!result.success) {
+      return new Response(JSON.stringify({ error: "Invalid Data", details: result.error.format() }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // 4. AI Insight Generation: Prepare system prompt and query OpenAI
+    const { question, dataSummary, history = [] } = result.data;
+
+    // 4. AI Process
     const openai = new OpenAI({ apiKey: openaiApiKey });
-
-    const systemPrompt = `You are a professional data analyst for Shemt, a SaaS analytics platform.
-You analyze revenue, users, and conversion metrics provided in the context.
-Explain trends clearly, provide actionable insights, and make recommendations.
-Be concise but thorough. Use a friendly, professional tone.
-
-DATA CONTEXT:
-${dataSummary}
-
-FORMATTING:
-Use markdown for formatting. Use bold for key figures. Use bullet points for lists.`;
-
+    const systemPrompt = `You are a professional data analyst for Shemt. Use markdown. Focus on actionable insights.\n\nDATA CONTEXT:\n${dataSummary}`;
+    
     const messages = [
       { role: "system", content: systemPrompt },
       ...history,
@@ -81,21 +96,18 @@ Use markdown for formatting. Use bold for key figures. Use bullet points for lis
     ];
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // Cost-effective and powerful
+      model: "gpt-4o-mini",
       messages: messages as any,
       temperature: 0.7,
     });
 
-    const response = completion.choices[0].message.content;
-
-    return new Response(JSON.stringify({ answer: response }), {
+    return new Response(JSON.stringify({ answer: completion.choices[0].message.content }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("AI Insights Error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Internal server error" }), {
-      status: 500,
+    return new Response(JSON.stringify({ error: error.message || "Internal Error" }), {
+      status: error.message === "Unauthorized" ? 401 : 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

@@ -1,10 +1,8 @@
 -- ==========================================
 -- SHEMT DATABASE SCHEMA
 -- ==========================================
--- This schema defines the structure for multi-tenant analytics.
 
 -- 1. USERS TABLE
--- Mirror of auth.users with additional app data
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
@@ -14,54 +12,88 @@ CREATE TABLE IF NOT EXISTS public.users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Enable Row Level Security for Users
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- Users can only view their own profile
+-- Clean up existing policies for users
+DROP POLICY IF EXISTS "Users can see their own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.users;
+
 CREATE POLICY "Users can see their own profile" ON public.users
     FOR SELECT USING (auth.uid() = id);
 
--- Users can only update their own profile
 CREATE POLICY "Users can update their own profile" ON public.users
     FOR UPDATE USING (auth.uid() = id);
 
--- Allow public insertion for signup (in production, use a database trigger instead)
-CREATE POLICY "Enable public insert for signup" ON public.users
-    FOR INSERT WITH CHECK (true);
+-- Trigger Function for User Creation
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, email, name)
+  VALUES (new.id, new.email, COALESCE(new.raw_user_meta_data->>'full_name', new.email));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Clean up existing trigger
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 -- 2. PROJECTS TABLE
--- Stores metadata for individual user projects/websites.
 CREATE TABLE IF NOT EXISTS public.projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
-    user_id UUID NOT NULL, -- Reference to auth.users.id
-    public_api_key TEXT NOT NULL, -- Key used for client-side ingestion
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    public_api_key TEXT NOT NULL DEFAULT encode(gen_random_bytes(24), 'base64'),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Enable Row Level Security for Projects
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
--- Users can only view projects they own
+-- Clean up existing policies for projects
+DROP POLICY IF EXISTS "Users can see their own projects" ON public.projects;
+DROP POLICY IF EXISTS "Users can create their own projects" ON public.projects;
+DROP POLICY IF EXISTS "Users can update their own projects" ON public.projects;
+DROP POLICY IF EXISTS "Users can delete their own projects" ON public.projects;
+
 CREATE POLICY "Users can see their own projects" ON public.projects
     FOR SELECT USING (auth.uid() = user_id);
 
--- 2. EVENTS TABLE
--- Stores raw analytics events (page views, clicks, etc.)
+CREATE POLICY "Users can create their own projects" ON public.projects
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own projects" ON public.projects
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own projects" ON public.projects
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- 3. EVENTS TABLE
 CREATE TABLE IF NOT EXISTS public.events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
-    name TEXT NOT NULL, -- Event type (e.g., 'page_view')
-    properties JSONB DEFAULT '{}'::jsonb, -- Custom event metadata
-    user_id TEXT, -- Optional identifier for the end-user
-    session_id TEXT, -- Groups events in a single visit
+    name TEXT NOT NULL,
+    properties JSONB DEFAULT '{}'::jsonb,
+    user_id TEXT,
+    session_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Enable Row Level Security for Events
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 
--- Ingestion Policy: Allow inserts via Edge Functions using Service Role.
--- We keep this restricted to prevent direct public data poisoning.
-CREATE POLICY "Enable insert for service role only" ON public.events
+-- Clean up existing policies for events
+DROP POLICY IF EXISTS "Users can see events from their own projects" ON public.events;
+DROP POLICY IF EXISTS "Allow service role insertion" ON public.events;
+
+CREATE POLICY "Users can see events from their own projects" ON public.events
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM public.projects p 
+            WHERE p.id = project_id AND p.user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Allow service role insertion" ON public.events
     FOR INSERT WITH CHECK (true);

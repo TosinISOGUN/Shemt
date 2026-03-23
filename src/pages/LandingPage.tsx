@@ -38,6 +38,8 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
 import { analytics } from '@/services/analyticsService'
+import { useTheme } from 'next-themes'
+import { Moon, Sun } from 'lucide-react'
 
 const DASHBOARD_SCREENSHOT = 'https://v3b.fal.media/files/b/0a91fdfb/hF0WHnEvu0FUjBnoyH3fk_VioEW37q.png'
 
@@ -149,6 +151,7 @@ const plans = [
 export function LandingPage() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
+  const { theme, setTheme } = useTheme()
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
 
   const containerVariants = {
@@ -188,6 +191,16 @@ export function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-4">
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+
             {loading ? (
               <div className="h-9 w-20 animate-pulse bg-muted rounded-md" />
             ) : user ? (
@@ -220,9 +233,9 @@ export function LandingPage() {
         {/* Hero Section */}
         <section className="relative py-20 lg:py-32 overflow-hidden">
           {/* Background Gradients */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-full -z-10 opacity-30 blur-3xl pointer-events-none">
-            <div className="absolute top-0 left-0 w-96 h-96 bg-primary rounded-full" />
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent rounded-full" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-full -z-10 opacity-30 dark:opacity-20 blur-3xl pointer-events-none">
+            <div className="absolute top-0 left-0 w-96 h-96 bg-primary/40 rounded-full" />
+            <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/30 rounded-full" />
           </div>
 
           <div className="container mx-auto px-4 text-center relative min-h-[60vh] flex flex-col items-center justify-center">
@@ -442,7 +455,7 @@ export function LandingPage() {
             >
               {/* 1. Large Feature span 2 cols, 2 rows */}
               <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-2">
-                <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden relative group">
+                <Card className="h-full border-border/50 bg-card/50 dark:bg-card/50 backdrop-blur-sm overflow-hidden relative group shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-6 md:p-8 flex flex-col h-full z-10 relative">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-6 text-primary">
                       <Cpu className="h-6 w-6" />
@@ -469,7 +482,7 @@ export function LandingPage() {
 
               {/* 2. Top Right Feature */}
               <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
-                <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm group overflow-hidden relative">
+                <Card className="h-full border-border/50 bg-card/50 dark:bg-card/50 backdrop-blur-sm group overflow-hidden relative shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-6 flex flex-col h-full">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 mb-4 text-primary">
                       <Zap className="h-5 w-5" />
@@ -495,7 +508,7 @@ export function LandingPage() {
 
               {/* 3. Bottom Right Feature */}
               <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
-                <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm group relative overflow-hidden">
+                <Card className="h-full border-border/50 bg-card/50 dark:bg-card/50 backdrop-blur-sm group relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-6 flex flex-col h-full z-10 relative">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 mb-4 text-primary">
                       <Shield className="h-5 w-5" />
@@ -635,7 +648,10 @@ export function LandingPage() {
               {plans.map((plan, index) => (
                 <Card 
                   key={index} 
-                  className={plan.popular ? 'border-primary shadow-2xl relative md:scale-105 z-10 overflow-visible' : 'border-border/50 bg-card/50'}
+                  className={plan.popular 
+                    ? 'border-primary shadow-2xl relative md:scale-105 z-10 overflow-visible bg-background dark:bg-card/50' 
+                    : 'border-border/50 bg-background/50 dark:bg-card/50 backdrop-blur-sm shadow-sm'
+                  }
                 >
                   {plan.popular && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full z-20">
