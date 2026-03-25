@@ -310,6 +310,64 @@ class AnalyticsService {
     };
   }
 
+  /**
+   * Fetch unique end-users tracked for a project
+   */
+  async getUsersExplorer(projectId: string = this.projectId, options?: AnalyticsOptions) {
+    // We want unique user_ids, their last seen time, total events, and potential attributes
+    // Since Supabase/PostgREST doesn't support complex GROUP BY well in a single call for this,
+    // we'll fetch recent events and aggregate, or use a RPC if we had one.
+    // For now, let's fetch events and group them in memory for a clean explorer view.
+    
+    let query = supabase
+      .from('events')
+      .select('user_id, created_at, name, properties')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+
+    query = this._applyFilters(query, options);
+    const { data, error } = await query;
+
+    if (error || !data) {
+      console.error('Users explorer fetch error:', error);
+      return [];
+    }
+
+    const userMap: Record<string, any> = {};
+
+    data.forEach(event => {
+      const uid = event.user_id || 'anonymous';
+      if (!userMap[uid]) {
+        userMap[uid] = {
+          id: uid,
+          lastSeen: event.created_at,
+          eventCount: 0,
+          revenue: 0,
+          location: event.properties?.location || 'Unknown',
+          device: event.properties?.screen ? 'Desktop' : 'Mobile', // Simple heuristic
+          browser: event.properties?.language || 'Universal',
+          status: (new Date().getTime() - new Date(event.created_at).getTime()) < 300000 ? 'online' : 'offline',
+          events: []
+        };
+      }
+      userMap[uid].eventCount += 1;
+      if (event.properties?.price) {
+        const parsed = parseFloat(event.properties.price);
+        if (!isNaN(parsed)) userMap[uid].revenue += parsed;
+      }
+      if (userMap[uid].events.length < 5) {
+        userMap[uid].events.push({
+            name: event.name,
+            at: event.created_at
+        });
+      }
+    });
+
+    return Object.values(userMap).sort((a, b) => 
+      new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime()
+    );
+  }
+
   async getRecentActivity(projectId: string = this.projectId) {
     const { data } = await supabase
       .from('events')
