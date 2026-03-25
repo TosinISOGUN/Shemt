@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useParams, Link, useNavigate } from '@tanstack/react-router'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Check, 
@@ -33,7 +33,7 @@ export function SetupPage() {
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState('html')
 
-  const ingestUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ingest`
+  const ingestUrl = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/ingest`
 
   useEffect(() => {
     async function fetchProject() {
@@ -109,16 +109,15 @@ window.shemt.track('conversion_event', {
       {/* 1. Simplified Header */}
       <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            asChild
-            className="h-11 w-11 rounded-2xl hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all border border-border/10"
+          <Link 
+            to="/dashboard/analytics"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "h-11 w-11 rounded-2xl hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all border border-border/10"
+            )}
           >
-            <Link to="/dashboard/analytics">
-              <ChevronLeft className="h-6 w-6" />
-            </Link>
-          </Button>
+            <ChevronLeft className="h-6 w-6" />
+          </Link>
           <div>
             <h1 className="text-4xl font-black tracking-tight mb-1 italic">
               Setup Guide
@@ -239,9 +238,16 @@ window.shemt.track('conversion_event', {
                 </div>
               </div>
               <div className="w-full md:w-auto flex flex-col gap-3">
-                <Button variant="outline" className="h-12 rounded-2xl border-border/60 font-bold hover:bg-muted/50" asChild>
-                  <a href="#" target="_blank">View Docs</a>
-                </Button>
+                <a 
+                  href="#" 
+                  target="_blank"
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "h-12 rounded-2xl border-border/60 font-bold hover:bg-muted/50"
+                  )}
+                >
+                  View Docs
+                </a>
                 <Button className="h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black shadow-xl shadow-primary/20 px-8" onClick={() => navigate({ to: '/dashboard/analytics' })}>
                   Check Analytics
                 </Button>

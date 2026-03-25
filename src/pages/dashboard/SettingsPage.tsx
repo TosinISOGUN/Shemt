@@ -18,12 +18,14 @@ import {
   CreditCard,
   Mail,
   Smartphone,
-  Check
+  Check,
+  Laptop
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'react-hot-toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 
 export function SettingsPage() {
   const { user, updateProfile } = useAuth()

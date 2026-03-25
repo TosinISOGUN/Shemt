@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const PRO_PLAN_CODE = 'PLN_9zhunyv04d9bt5i'
-const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || ''
+const PAYSTACK_PUBLIC_KEY = (import.meta as any).env.VITE_PAYSTACK_PUBLIC_KEY || ''
 
 export function BillingPage() {
   const { user } = useAuth()

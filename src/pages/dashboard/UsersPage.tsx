@@ -191,7 +191,7 @@ export function UsersPage() {
               <Select 
                 value={selectedProject} 
                 onValueChange={(val) => {
-                  setSelectedProject(val)
+                  if (val) setSelectedProject(val)
                   setSelectedProjectData(projects.find(p => p.id === val) || null)
                 }}
               >

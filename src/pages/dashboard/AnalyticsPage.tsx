@@ -438,7 +438,7 @@ export function AnalyticsPage() {
             }} />
           )}
 
-          {import.meta.env.DEV && projects.length > 0 && metrics?.events?.value === 0 && !loading && (
+          {(import.meta as any).env.DEV && projects.length > 0 && metrics?.events?.value === 0 && !loading && (
             <Button
               variant="secondary"
               className="gap-2 h-10 text-xs"
@@ -493,7 +493,7 @@ export function AnalyticsPage() {
                   )}
                 </Button>
               } />
-              <PopoverContent className="w-auto p-0 border-border/40 bg-card overflow-hidden shadow-2xl" align="end shadow-xl">
+              <PopoverContent className="w-auto p-0 border-border/40 bg-card overflow-hidden shadow-2xl shadow-xl" align="end">
                 <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-border/20">
                   {/* Presets Sidebar */}
                   <div className="flex flex-col p-3 bg-muted/10 min-w-[160px] space-y-1">
