@@ -52,7 +52,7 @@ export function TopNavbar({ onMenuClick, sidebarCollapsed }: TopNavbarProps) {
 
   const handleLogout = async () => {
     await signOut()
-    navigate({ to: '/login' })
+    navigate({ to: '/' })
   }
 
   // Get user initials for avatar

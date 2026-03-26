@@ -11,7 +11,7 @@
 
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { BarChart3, Loader2, Mail, Lock, User, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { BarChart3, Loader2, Mail, Lock, User, ArrowRight, CheckCircle2, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -96,7 +96,17 @@ export function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 relative">
+      {/* Back to Home Button */}
+      <div className="absolute top-8 left-8 z-20">
+        <Link 
+          to="/" 
+          className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors bg-background/50 backdrop-blur-sm px-4 py-2 rounded-full border border-border/50 shadow-sm"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back to Home
+        </Link>
+      </div>
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />

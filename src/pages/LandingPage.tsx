@@ -212,7 +212,7 @@ export function LandingPage() {
               </Link>
             ) : (
               <>
-                <Link to="/login" className="hidden sm:block">
+                <Link to="/login">
                   <Button variant="ghost">Log in</Button>
                 </Link>
                 <Link to="/signup">
@@ -739,7 +739,7 @@ export function LandingPage() {
               </h2>
               <p className="mb-10 text-lg opacity-90 max-w-2xl mx-auto">
                 No credit card required. Connect your data and see insights in minutes. 
-                Join 5,000+ companies already using Shemt.
+                Start your journey towards data-driven growth today.
               </p>
               <Link to="/signup">
                 <Button 
@@ -786,10 +786,8 @@ export function LandingPage() {
             <div className="space-y-4">
               <h4 className="font-bold text-sm uppercase tracking-wider">Resources</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">API Reference</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Changelog</a></li>
+                <li><a href="#features" className="hover:text-primary transition-colors">Documentation</a></li>
+                <li><a href="#how-it-works" className="hover:text-primary transition-colors">How it works</a></li>
               </ul>
             </div>
 
@@ -797,7 +795,6 @@ export function LandingPage() {
               <h4 className="font-bold text-sm uppercase tracking-wider">Company</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#" className="hover:text-primary transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Careers</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
               </ul>
