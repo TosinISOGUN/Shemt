@@ -4,7 +4,7 @@ import { aiService } from './aiService'
 const SESSION_KEY = 'shemt_session_id';
 const USER_ID_KEY = 'shemt_anonymous_id';
 const INGEST_URL = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/ingest`;
-const API_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY; 
+const API_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
 
 export interface AnalyticsEvent {
   name: string;
@@ -139,7 +139,7 @@ class AnalyticsService {
       .select('properties')
       .eq('project_id', projectId)
       .filter('properties->>price', 'neq', 'null');
-    
+
     revenueQuery = this._applyFilters(revenueQuery, options);
     const { data: revenueData } = await revenueQuery;
     const totalRevenue = revenueData?.reduce((sum, e) => sum + (parseFloat(e.properties?.price) || 0), 0) || 0;
@@ -149,7 +149,7 @@ class AnalyticsService {
       .from('events')
       .select('user_id')
       .eq('project_id', projectId);
-    
+
     usersQuery = this._applyFilters(usersQuery, options);
     const { data: usersData } = await usersQuery;
     const activeUsers = new Set(usersData?.map(u => u.user_id)).size;
@@ -159,19 +159,19 @@ class AnalyticsService {
       .from('events')
       .select('*', { count: 'exact', head: true })
       .eq('project_id', projectId);
-    
+
     eventQuery = this._applyFilters(eventQuery, options);
     const { count: eventCount } = await eventQuery;
 
     // 4. Conversion rate (signup -> paid)
     let signupQuery = supabase.from('events').select('*', { count: 'exact', head: true }).eq('project_id', projectId).eq('name', 'signup');
     let paidQuery = supabase.from('events').select('*', { count: 'exact', head: true }).eq('project_id', projectId).eq('name', 'paid');
-    
+
     signupQuery = this._applyFilters(signupQuery, options);
     paidQuery = this._applyFilters(paidQuery, options);
 
     const [{ count: signups }, { count: paid }] = await Promise.all([signupQuery, paidQuery]);
-    
+
     const conversionRate = signups ? (paid! / signups!) * 100 : 0;
 
     // 5. Growth calculation (Simulated for analytics view consistency)
@@ -179,7 +179,7 @@ class AnalyticsService {
       revenue: {
         value: totalRevenue,
         change: 12.4,
-        sparkline: [totalRevenue * 0.8, totalRevenue * 0.9, totalRevenue] 
+        sparkline: [totalRevenue * 0.8, totalRevenue * 0.9, totalRevenue]
       },
       activeUsers: {
         value: activeUsers,
@@ -248,14 +248,14 @@ class AnalyticsService {
   async getConversionFunnel(projectId: string = this.projectId, options?: AnalyticsOptions) {
     const steps = ['page_view', 'signup', 'activated', 'paid'];
     const labels = ['Visited', 'Signed Up', 'Activated', 'Paid'];
-    
+
     const counts = await Promise.all(steps.map(async (step) => {
       let query = supabase
         .from('events')
         .select('*', { count: 'exact', head: true })
         .eq('project_id', projectId)
         .eq('name', step);
-      
+
       query = this._applyFilters(query, options);
       const { count } = await query;
       return count || 0;
@@ -274,7 +274,7 @@ class AnalyticsService {
       .from('events')
       .select('created_at, name, properties')
       .eq('project_id', projectId);
-    
+
     query = this._applyFilters(query, options);
     const { data } = await query;
 
@@ -301,11 +301,11 @@ class AnalyticsService {
     });
     const peakHourArr = Object.entries(hours).sort((a: any, b: any) => b[1] - a[1]);
     const peakHour = peakHourArr[0]?.[0] || 'N/A';
-    const peakLabel = peakHour !== 'N/A' ? `${peakHour}:00 — ${parseInt(peakHour)+1}:00` : 'N/A';
+    const peakLabel = peakHour !== 'N/A' ? `${peakHour}:00 — ${parseInt(peakHour) + 1}:00` : 'N/A';
 
     return {
       highestRevenueDay: highestDay,
-      lowestConversionDay: 'Mar 12, 2024', 
+      lowestConversionDay: 'Mar 12, 2024',
       peakActivityTime: peakLabel
     };
   }
@@ -318,7 +318,7 @@ class AnalyticsService {
     // Since Supabase/PostgREST doesn't support complex GROUP BY well in a single call for this,
     // we'll fetch recent events and aggregate, or use a RPC if we had one.
     // For now, let's fetch events and group them in memory for a clean explorer view.
-    
+
     let query = supabase
       .from('events')
       .select('user_id, created_at, name, properties')
@@ -357,13 +357,13 @@ class AnalyticsService {
       }
       if (userMap[uid].events.length < 5) {
         userMap[uid].events.push({
-            name: event.name,
-            at: event.created_at
+          name: event.name,
+          at: event.created_at
         });
       }
     });
 
-    return Object.values(userMap).sort((a, b) => 
+    return Object.values(userMap).sort((a, b) =>
       new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime()
     );
   }
@@ -401,7 +401,7 @@ class AnalyticsService {
       // but aiService.generateSuggestedInsights expects a userId.
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return ["Connect your account to see AI insights."];
-      
+
       return await aiService.generateSuggestedInsights(user.id);
     } catch (error) {
       console.error('AI Insights fetch error:', error);
@@ -460,7 +460,7 @@ class AnalyticsService {
    */
   async seedSampleData(userId: string) {
     console.log('Seeding real database data for user:', userId);
-    
+
     // 1. Get user's first project
     const { data: project } = await supabase
       .from('projects')
@@ -470,8 +470,8 @@ class AnalyticsService {
       .single();
 
     if (!project) {
-       console.error('No project found to seed data into');
-       return false;
+      console.error('No project found to seed data into');
+      return false;
     }
 
     const events: any[] = [];
@@ -481,7 +481,7 @@ class AnalyticsService {
       const type = ['page_view', 'signup', 'activated', 'paid'][Math.floor(Math.random() * 4)];
       const date = new Date(now);
       date.setDate(date.getDate() - Math.floor(Math.random() * 7));
-      
+
       events.push({
         project_id: project.id,
         name: type,

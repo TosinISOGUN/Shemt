@@ -22,8 +22,8 @@ const RequestSchema = z.object({
 
 // User-based Rate Limiter (In-Memory)
 const USER_RATE_LIMITS = new Map<string, { count: number; resetAt: number }>();
-const MAX_REQUESTS_PER_WINDOW = 20;
-const WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_REQUESTS_PER_WINDOW = 20; 
+const WINDOW_MS = 60 * 60 * 1000; 
 
 function checkRateLimit(userId: string): boolean {
   const now = Date.now();
@@ -56,6 +56,9 @@ async function handler(req: Request): Promise<Response> {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY")!;
+    
+    if (!openaiApiKey) throw new Error("OPENAI_API_KEY is not set");
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
     // 1. Auth Verification
@@ -67,7 +70,7 @@ async function handler(req: Request): Promise<Response> {
 
     // 2. Rate Limiting
     if (checkRateLimit(user.id)) {
-      return new Response(JSON.stringify({ error: "AI limit reached for this hour. Try again later." }), {
+      return new Response(JSON.stringify({ error: "AI limit reached. Try again in an hour." }), {
         status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -85,19 +88,23 @@ async function handler(req: Request): Promise<Response> {
 
     const { question, dataSummary, history = [] } = result.data;
 
-    // 4. AI Process
+    // 4. OpenAI AI Process
     const openai = new OpenAI({ apiKey: openaiApiKey });
-    const systemPrompt = `You are a professional data analyst for Shemt. Use markdown. Focus on actionable insights.\n\nDATA CONTEXT:\n${dataSummary}`;
-    
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...history,
-      { role: "user", content: question }
-    ];
+    const systemPrompt = `You are SHEMT ANALYST, a world-class growth hacker and data scientist.
+Your goal is to provide actionable, premium insights for startup founders.
+Use professional tone and markdown formatting. 
+Focus on: Revenue Growth, Conversion Optimization, and User Retention.
+
+CONTEXT DATA:
+${dataSummary}`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: messages as any,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...history,
+        { role: "user", content: question }
+      ] as any,
       temperature: 0.7,
     });
 
@@ -106,8 +113,9 @@ async function handler(req: Request): Promise<Response> {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
+    console.error('AI Insight Error:', error);
     return new Response(JSON.stringify({ error: error.message || "Internal Error" }), {
-      status: error.message === "Unauthorized" ? 401 : 500,
+      status: error.message === "Unauthorized" || error.message === "Invalid session" ? 401 : 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

@@ -9,11 +9,11 @@
  */
 
 import { useEffect } from 'react'
-import { 
-  DollarSign, 
-  Users as UsersIcon, 
-  TrendingUp, 
-  ArrowUpRight, 
+import {
+  DollarSign,
+  Users as UsersIcon,
+  TrendingUp,
+  ArrowUpRight,
   ArrowDownRight,
   AlertCircle,
   RefreshCw,
@@ -21,17 +21,19 @@ import {
   BarChart3
 } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar
@@ -39,6 +41,7 @@ import {
 import { analyticsService } from '@/services/analyticsService'
 import { useAuth } from '@/hooks/useAuth'
 import { AIInsights } from '@/components/dashboard/AIInsights'
+import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
 export function DashboardPage() {
@@ -50,6 +53,41 @@ export function DashboardPage() {
     window.scrollTo(0, 0)
   }, [])
 
+  // Fetch user's first project to get the correct UUID for analytics
+  const { data: projectData, isLoading: isLoadingProject } = useQuery({
+    queryKey: ['user-project-id', user?.id],
+    queryFn: async () => {
+      // 1. Try to fetch existing project
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user?.id)
+        .limit(1)
+        .maybeSingle()
+      
+      if (error) throw error
+      if (data) return data
+
+      // 2. If no project, create a default one for the user
+      // This ensures new users always have a valid dashboard context
+      const { data: newProject, error: createError } = await supabase
+        .from('projects')
+        .insert({
+          user_id: user?.id,
+          name: 'My First App',
+          public_api_key: `pk_${Math.random().toString(36).substring(2, 12)}`
+        })
+        .select('*')
+        .single()
+      
+      if (createError) throw createError
+      return newProject
+    },
+    enabled: !!user?.id,
+  })
+
+  const projectId = projectData?.id
+
   // Fetch metrics summary
   const { 
     data: metrics, 
@@ -57,9 +95,9 @@ export function DashboardPage() {
     isError: isErrorMetrics,
     refetch: refetchMetrics
   } = useQuery({
-    queryKey: ['dashboard-metrics', user?.id],
-    queryFn: () => analyticsService.getDashboardMetrics(user?.id || ''),
-    enabled: !!user?.id,
+    queryKey: ['dashboard-metrics', projectId],
+    queryFn: () => analyticsService.getDashboardMetrics(projectId || ''),
+    enabled: !!projectId,
   })
 
   // Fetch revenue history
@@ -68,9 +106,9 @@ export function DashboardPage() {
     isLoading: isLoadingRevenue,
     refetch: refetchRevenue
   } = useQuery({
-    queryKey: ['revenue-history', user?.id],
-    queryFn: () => analyticsService.getRevenueTrend(user?.id || ''),
-    enabled: !!user?.id,
+    queryKey: ['revenue-history', projectId],
+    queryFn: () => analyticsService.getRevenueTrend(projectId || ''),
+    enabled: !!projectId,
   })
 
   // Fetch user growth
@@ -79,22 +117,10 @@ export function DashboardPage() {
     isLoading: isLoadingGrowth,
     refetch: refetchGrowth
   } = useQuery({
-    queryKey: ['user-growth', user?.id],
-    queryFn: () => analyticsService.getUserGrowth(user?.id || ''),
-    enabled: !!user?.id,
+    queryKey: ['user-growth', projectId],
+    queryFn: () => analyticsService.getUserGrowth(projectId || ''),
+    enabled: !!projectId,
   })
-
-  // Seed sample data if none exists (only once)
-  useEffect(() => {
-    if (user?.id) {
-      analyticsService.seedSampleData(user.id).then(() => {
-        // Invalidate queries to show seeded data
-        queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] })
-        queryClient.invalidateQueries({ queryKey: ['revenue-history'] })
-        queryClient.invalidateQueries({ queryKey: ['user-growth'] })
-      })
-    }
-  }, [user?.id, queryClient])
 
   const handleRefresh = () => {
     refetchMetrics()
@@ -169,8 +195,8 @@ export function DashboardPage() {
             <RefreshCw className={`h-4 w-4 ${isLoadingMetrics ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             className="shadow-lg shadow-primary/20"
             onClick={() => analyticsService.exportToCsv()}
           >
@@ -215,22 +241,72 @@ export function DashboardPage() {
         ))}
       </div>
 
-      {/* Charts or Empty State */}
-      {!hasData && !isLoadingMetrics ? (
-        <Card className="border-dashed border-2 bg-muted/20">
-          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-6">
-              <BarChart3 className="h-10 w-10 text-muted-foreground opacity-50" />
+      {/* Onboarding / Empty State - Show if NO data and NOT loading */}
+      {!hasData && !isLoadingMetrics && !isLoadingProject ? (
+        <div className="grid gap-8">
+          <Card className="border-none bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-none overflow-hidden relative group">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+              <Sparkles className="h-32 w-32 rotate-12" />
             </div>
-            <h3 className="text-xl font-bold mb-2">No analytics data yet</h3>
-            <p className="text-muted-foreground max-w-sm mb-8">
-              Connect your data source or start tracking events to see real-time insights and trends.
-            </p>
-            <Button variant="outline" onClick={handleRefresh}>
-              Check for Data
-            </Button>
-          </CardContent>
-        </Card>
+            <CardContent className="p-8 sm:p-12 relative z-10">
+              <div className="max-w-2xl">
+                <Badge className="mb-4 bg-primary/20 text-primary border-primary/20 hover:bg-primary/30 transition-colors">
+                  Setup Required
+                </Badge>
+                <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-4 italic">Welcome to Shemt!</h2>
+                <p className="text-muted-foreground text-lg font-medium leading-relaxed mb-8">
+                  You're just minutes away from AI-powered insights. Follow these 3 steps to activate your workspace.
+                </p>
+                
+                <div className="grid gap-6">
+                  {/* Step 1 */}
+                  <div className="flex items-start gap-4 p-4 rounded-2xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all group/step cursor-default">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary shrink-0 group-hover/step:bg-primary group-hover/step:text-primary-foreground transition-all">1</div>
+                    <div>
+                      <h4 className="font-bold mb-1 group-hover/step:text-primary transition-colors">Check your Project</h4>
+                      <p className="text-sm text-muted-foreground font-medium">We've created a default project named "My App" to get you started.</p>
+                    </div>
+                  </div>
+
+                  {/* Step 2 */}
+                  <Link 
+                    to="/dashboard/setup/$projectId" 
+                    params={{ projectId: projectId || 'default' }}
+                    className="flex items-start gap-4 p-4 rounded-2xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all group/step"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary shrink-0 group-hover/step:bg-primary group-hover/step:text-primary-foreground transition-all">2</div>
+                    <div className="flex-1">
+                      <h4 className="font-bold mb-1 group-hover/step:text-primary transition-colors flex items-center justify-between">
+                        Install Snippet
+                        <ArrowUpRight className="h-4 w-4 opacity-0 group-hover/step:opacity-100 transition-all" />
+                      </h4>
+                      <p className="text-sm text-muted-foreground font-medium">Get your 3-line tracking script and paste it into your website.</p>
+                    </div>
+                  </Link>
+
+                  {/* Step 3 */}
+                  <div className="flex items-start gap-4 p-4 rounded-2xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all group/step cursor-default">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary shrink-0 group-hover/step:bg-primary group-hover/step:text-primary-foreground transition-all">3</div>
+                    <div>
+                      <h4 className="font-bold mb-1 group-hover/step:text-primary transition-colors">Verify Connection</h4>
+                      <p className="text-sm text-muted-foreground font-medium">As soon as your site is live, shemt will begin analyzing trends automatically.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-10 flex flex-wrap gap-4">
+                  <Button onClick={() => analyticsService.seedSampleData(user?.id || '').then(handleRefresh)} variant="outline" className="rounded-xl font-bold bg-background/50 border-primary/20 hover:bg-primary/5">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Demo with Sample Data
+                  </Button>
+                  <Button onClick={handleRefresh} className="rounded-xl font-bold shadow-xl shadow-primary/20">
+                    I've installed the script
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {/* Revenue Chart */}
@@ -248,26 +324,26 @@ export function DashboardPage() {
                     <AreaChart data={revenueHistory}>
                       <defs>
                         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         stroke="hsl(var(--muted-foreground))"
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
                       />
-                      <YAxis 
+                      <YAxis
                         stroke="hsl(var(--muted-foreground))"
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
                         tickFormatter={(value) => `$${value}`}
                       />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{
                           backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
@@ -279,14 +355,14 @@ export function DashboardPage() {
                         labelStyle={{ color: 'hsl(var(--foreground))' }}
                         itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="value" 
+                      <Area
+                        type="monotone"
+                        dataKey="value"
                         name="Revenue"
                         stroke="hsl(var(--primary))"
                         strokeWidth={2}
-                        fillOpacity={1} 
-                        fill="url(#colorRevenue)" 
+                        fillOpacity={1}
+                        fill="url(#colorRevenue)"
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -309,20 +385,20 @@ export function DashboardPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={userGrowth}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         stroke="hsl(var(--muted-foreground))"
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
                       />
-                      <YAxis 
+                      <YAxis
                         stroke="hsl(var(--muted-foreground))"
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
                       />
-                      <Tooltip 
+                      <Tooltip
                         cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
                         contentStyle={{
                           backgroundColor: 'hsl(var(--card))',
@@ -335,8 +411,8 @@ export function DashboardPage() {
                         labelStyle={{ color: 'hsl(var(--foreground))' }}
                         itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
-                      <Bar 
-                        dataKey="value" 
+                      <Bar
+                        dataKey="value"
                         name="Users"
                         fill="hsl(var(--accent))"
                         radius={[4, 4, 0, 0]}
@@ -356,7 +432,7 @@ export function DashboardPage() {
           <Sparkles className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-bold tracking-tight">AI Data Intelligence</h2>
         </div>
-        <AIInsights />
+        <AIInsights projectId={projectId} />
       </div>
     </div>
   )

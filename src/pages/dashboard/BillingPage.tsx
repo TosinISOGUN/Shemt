@@ -152,7 +152,7 @@ export function BillingPage() {
                 <div className="pt-4">
                   <Button 
                     size="lg" 
-                    className="w-full h-auto py-5 sm:h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-sm sm:text-xl italic shadow-2xl shadow-primary/20 transition-all active:scale-95 group px-4"
+                    className="w-full h-auto py-5 sm:h-16 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black text-sm sm:text-xl italic shadow-2xl shadow-primary/20 transition-all active:scale-95 group px-4"
                     onClick={handleUpgrade}
                   >
                     Upgrade to Pro — ₦100/mo

@@ -126,3 +126,33 @@ CREATE POLICY "Users can see events from their own projects" ON public.events
 
 CREATE POLICY "Allow service role insertion" ON public.events
     FOR INSERT WITH CHECK (true);
+
+-- 4. ANALYTICS VIEWS (For AI Insights)
+-- View for AI to see events with project info and readable names
+CREATE OR REPLACE VIEW public.analytics_events AS
+SELECT 
+    e.id,
+    e.name as event_type,
+    COALESCE(e.properties->>'value', '0') as value,
+    e.created_at,
+    p.user_id,
+    p.name as project_name
+FROM public.events e
+JOIN public.projects p ON e.project_id = p.id;
+
+-- View for metrics summary (Aggregated)
+CREATE OR REPLACE VIEW public.metrics_summary AS
+SELECT 
+    p.user_id,
+    COALESCE(SUM((NULLIF(e.properties->>'value', '')::numeric)), 0) as revenue,
+    COUNT(DISTINCT e.user_id) as active_users,
+    CASE 
+        WHEN COUNT(DISTINCT e.session_id) = 0 THEN 0
+        ELSE ROUND((COUNT(DISTINCT CASE WHEN e.name = 'conversion' THEN e.session_id END)::numeric / NULLIF(COUNT(DISTINCT e.session_id), 0)::numeric) * 100, 2)
+    END as conversion_rate
+FROM public.projects p
+LEFT JOIN public.events e ON p.id = e.project_id
+GROUP BY p.user_id;
+
+-- Ensure RLS on views (if supported) or handle via security definer functions if needed
+-- Note: Views in Supabase/Postgres generally inherit permissions of the underlying tables

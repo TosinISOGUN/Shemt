@@ -17,9 +17,13 @@ import {
   BarChart3, 
   CreditCard, 
   Settings,
-  Activity
+  Activity,
+  Globe,
+  Terminal
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/useAuth'
 
 interface SidebarProps {
   collapsed?: boolean
@@ -56,9 +60,26 @@ const navItems = [
 
 export function Sidebar({ collapsed = false }: SidebarProps) {
   const location = useLocation()
+  const { user } = useAuth()
+  const [projectId, setProjectId] = useState<string | null>(null)
   const [isHovered, setIsHovered] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   
+  useEffect(() => {
+    async function fetchProject() {
+      if (!user) return
+      const { data } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
+      
+      if (data) setProjectId(data.id)
+    }
+    fetchProject()
+  }, [user])
+
   // Detect mobile view for label visibility
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024)
@@ -141,6 +162,58 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
             </Link>
           )
         })}
+
+        {/* Dynamic Installation Link */}
+        {projectId && (
+          <Link
+            to="/dashboard/setup/$projectId"
+            params={{ projectId }}
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group',
+              'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+              location.pathname.includes('/setup/') ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm' : 'text-sidebar-foreground/70'
+            )}
+          >
+            <Terminal className={cn('h-5 w-5 shrink-0 transition-colors', location.pathname.includes('/setup/') ? 'text-primary' : 'group-hover:text-primary')} />
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="truncate"
+                >
+                  Installation
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+        )}
+
+        {/* View Site Link */}
+        <div className="pt-4 mt-4 border-t border-sidebar-border">
+          <Link
+            to="/"
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group',
+              'text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+            )}
+          >
+            <Globe className="h-5 w-5 shrink-0 transition-colors group-hover:text-primary" />
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="truncate"
+                >
+                  View Landing Page
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+        </div>
       </nav>
     </motion.aside>
   )

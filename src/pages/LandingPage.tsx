@@ -11,11 +11,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { 
-  ArrowRight, 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
+import {
+  ArrowRight,
+  BarChart3,
+  TrendingUp,
+  Users,
   Shield,
   Zap,
   CheckCircle2,
@@ -183,7 +183,7 @@ export function LandingPage() {
             </div>
             <span className="text-xl font-bold tracking-tight">Shemt</span>
           </div>
-          
+
           <nav className="hidden lg:flex items-center gap-8">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Features</a>
             <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">How it works</a>
@@ -216,7 +216,7 @@ export function LandingPage() {
                   <Button variant="ghost">Log in</Button>
                 </Link>
                 <Link to="/signup">
-                  <Button 
+                  <Button
                     className="shadow-lg shadow-primary/20"
                     onClick={() => analytics.track('cta_click', { location: 'header', label: 'Get Started' })}
                   >
@@ -239,7 +239,7 @@ export function LandingPage() {
           </div>
 
           <div className="container mx-auto px-4 text-center relative min-h-[60vh] flex flex-col items-center justify-center">
-            
+
             {/* Abstract 3D Geometric Animation (Behind Text) */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -375,14 +375,14 @@ export function LandingPage() {
                 <span className="text-primary italic">Modern Startups</span>
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl leading-relaxed">
-                Understand your revenue, users, and growth with Shemt. 
+                Understand your revenue, users, and growth with Shemt.
                 Our AI analyst uncovers hidden trends in your data so you can focus on building what matters.
               </p>
               <div className="mt-10 flex flex-col items-center">
                 <div className="flex flex-col sm:flex-row justify-center gap-4 w-full">
                   <Link to="/signup">
-                    <Button 
-                      size="lg" 
+                    <Button
+                      size="lg"
                       className="h-12 px-8 text-lg gap-2 shadow-xl shadow-primary/20 w-full sm:w-auto"
                       onClick={() => analytics.track('cta_click', { location: 'hero', label: 'Get Started Free' })}
                     >
@@ -390,9 +390,9 @@ export function LandingPage() {
                       <ArrowRight className="h-5 w-5" />
                     </Button>
                   </Link>
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
+                  <Button
+                    size="lg"
+                    variant="outline"
                     className="h-12 px-8 text-lg w-full sm:w-auto bg-background/50 backdrop-blur-md"
                     onClick={() => analytics.track('cta_click', { location: 'hero', label: 'Watch Demo' })}
                   >
@@ -446,7 +446,7 @@ export function LandingPage() {
               </p>
             </div>
 
-            <motion.div 
+            <motion.div
               variants={containerVariants}
               initial="hidden"
               whileInView="visible"
@@ -467,12 +467,12 @@ export function LandingPage() {
                     {/* Visual */}
                     <div className="mt-auto h-48 rounded-xl bg-gradient-to-t from-background to-muted/50 border flex items-end p-4 md:p-6 relative overflow-hidden">
                       <div className="w-full bg-card border rounded-lg p-4 shadow-xl opacity-90 transition-transform duration-500 group-hover:-translate-y-2">
-                         <div className="flex items-center gap-2 mb-3"><Sparkles className="h-4 w-4 text-primary animate-pulse"/> <span className="text-sm font-semibold">Generating query...</span></div>
-                         <div className="space-y-2">
-                           <div className="h-2 w-3/4 bg-muted-foreground/20 rounded-full"></div>
-                           <div className="h-2 w-1/2 bg-muted-foreground/20 rounded-full"></div>
-                           <div className="h-2 w-5/6 bg-muted-foreground/10 rounded-full"></div>
-                         </div>
+                        <div className="flex items-center gap-2 mb-3"><Sparkles className="h-4 w-4 text-primary animate-pulse" /> <span className="text-sm font-semibold">Generating query...</span></div>
+                        <div className="space-y-2">
+                          <div className="h-2 w-3/4 bg-muted-foreground/20 rounded-full"></div>
+                          <div className="h-2 w-1/2 bg-muted-foreground/20 rounded-full"></div>
+                          <div className="h-2 w-5/6 bg-muted-foreground/10 rounded-full"></div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -492,15 +492,15 @@ export function LandingPage() {
                       Live data streaming. See events exactly as they happen.
                     </p>
                     <div className="h-20 w-full mt-4 flex items-end gap-1.5 opacity-50 group-hover:opacity-100 transition-opacity duration-500">
-                       {[40, 70, 45, 90, 65, 80, 100, 55, 75].map((h, i) => (
-                         <motion.div 
-                           key={i} 
-                           className="flex-1 bg-primary rounded-t-sm" 
-                           initial={{height: `${h}%`}} 
-                           animate={{height: [`${h}%`, `${Math.min(100, h+20)}%`, `${Math.max(10, h-20)}%`, `${h}%`]}} 
-                           transition={{duration: Math.random()*2+2, repeat: Infinity, ease: "easeInOut"}} 
-                         />
-                       ))}
+                      {[40, 70, 45, 90, 65, 80, 100, 55, 75].map((h, i) => (
+                        <motion.div
+                          key={i}
+                          className="flex-1 bg-primary rounded-t-sm"
+                          initial={{ height: `${h}%` }}
+                          animate={{ height: [`${h}%`, `${Math.min(100, h + 20)}%`, `${Math.max(10, h - 20)}%`, `${h}%`] }}
+                          transition={{ duration: Math.random() * 2 + 2, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -518,8 +518,8 @@ export function LandingPage() {
                       SOC2 compliance, End-to-end encryption, and role-based access control built in.
                     </p>
                     <div className="mt-auto grid grid-cols-2 gap-2">
-                       <div className="text-[10px] font-mono border rounded px-2 py-1 flex items-center justify-center text-muted-foreground bg-muted/30">SOC2 Type II</div>
-                       <div className="text-[10px] font-mono border rounded px-2 py-1 flex items-center justify-center text-muted-foreground bg-muted/30">GDPR Ready</div>
+                      <div className="text-[10px] font-mono border rounded px-2 py-1 flex items-center justify-center text-muted-foreground bg-muted/30">SOC2 Type II</div>
+                      <div className="text-[10px] font-mono border rounded px-2 py-1 flex items-center justify-center text-muted-foreground bg-muted/30">GDPR Ready</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -569,7 +569,7 @@ export function LandingPage() {
                     {/* Chat Body */}
                     <div className="flex-1 p-4 sm:p-6 flex flex-col gap-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 to-transparent overflow-hidden">
                       {/* User Message */}
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
@@ -578,7 +578,7 @@ export function LandingPage() {
                         Why did conversion drop yesterday?
                       </motion.div>
                       {/* AI Response */}
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
@@ -589,12 +589,12 @@ export function LandingPage() {
                         <div className="space-y-3 w-full">
                           <p className="leading-relaxed">Traffic from your Facebook Ad campaign spiked, but the bounce rate was <span className="font-bold text-red-400">85%</span>.</p>
                           <div className="h-2 w-full bg-primary/10 rounded-full overflow-hidden">
-                            <motion.div 
-                              initial={{ width: 0 }} 
-                              whileInView={{ width: "85%" }} 
+                            <motion.div
+                              initial={{ width: 0 }}
+                              whileInView={{ width: "85%" }}
                               viewport={{ once: true }}
                               transition={{ duration: 1, delay: 1 }}
-                              className="h-full bg-red-400" 
+                              className="h-full bg-red-400"
                             />
                           </div>
                           <p className="text-xs text-muted-foreground font-mono bg-background/50 p-2 rounded border">Insight: Mobile load times averaged 4.2s.</p>
@@ -625,7 +625,7 @@ export function LandingPage() {
             {/* Billing Toggle */}
             <div className="flex justify-center items-center gap-4 mb-16">
               <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
-              <button 
+              <button
                 onClick={() => {
                   const newCycle = billingCycle === 'monthly' ? 'yearly' : 'monthly';
                   setBillingCycle(newCycle);
@@ -633,7 +633,7 @@ export function LandingPage() {
                 }}
                 className="relative w-12 h-6 rounded-full bg-muted border border-border p-1 transition-colors hover:border-primary/50"
               >
-                <motion.div 
+                <motion.div
                   animate={{ x: billingCycle === 'monthly' ? 0 : 24 }}
                   className="w-4 h-4 rounded-full bg-primary"
                 />
@@ -646,10 +646,10 @@ export function LandingPage() {
 
             <div className="grid gap-8 md:grid-cols-3 max-w-6xl mx-auto pt-4 md:pt-8">
               {plans.map((plan, index) => (
-                <Card 
-                  key={index} 
-                  className={plan.popular 
-                    ? 'border-primary shadow-2xl relative md:scale-105 z-10 overflow-visible bg-background dark:bg-card/50' 
+                <Card
+                  key={index}
+                  className={plan.popular
+                    ? 'border-primary shadow-2xl relative md:scale-105 z-10 overflow-visible bg-background dark:bg-card/50'
                     : 'border-border/50 bg-background/50 dark:bg-card/50 backdrop-blur-sm shadow-sm'
                   }
                 >
@@ -698,13 +698,13 @@ export function LandingPage() {
                         </div>
                       )}
                     </div>
-                    
+
                     <Link to="/signup" className="block">
-                      <Button 
-                        className="w-full h-12 text-md" 
+                      <Button
+                        className="w-full h-12 text-md"
                         variant={plan.popular ? 'default' : 'outline'}
-                        onClick={() => analytics.track('plan_selection_click', { 
-                          plan: plan.name, 
+                        onClick={() => analytics.track('plan_selection_click', {
+                          plan: plan.name,
                           billingCycle,
                           price: billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice
                         })}
@@ -738,13 +738,13 @@ export function LandingPage() {
                 with AI today.
               </h2>
               <p className="mb-10 text-lg opacity-90 max-w-2xl mx-auto">
-                No credit card required. Connect your data and see insights in minutes. 
+                No credit card required. Connect your data and see insights in minutes.
                 Start your journey towards data-driven growth today.
               </p>
               <Link to="/signup">
-                <Button 
-                  size="lg" 
-                  variant="secondary" 
+                <Button
+                  size="lg"
+                  variant="secondary"
                   className="h-14 px-10 text-lg gap-2 shadow-xl hover:scale-105 transition-transform"
                   onClick={() => analytics.track('cta_click', { location: 'footer', label: 'Create Free Account' })}
                 >
@@ -772,7 +772,7 @@ export function LandingPage() {
                 The next generation of SaaS analytics. Powered by AI, built for growth teams who demand more from their data.
               </p>
             </div>
-            
+
             <div className="space-y-4">
               <h4 className="font-bold text-sm uppercase tracking-wider">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
@@ -800,7 +800,7 @@ export function LandingPage() {
               </ul>
             </div>
           </div>
-          
+
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-8 border-t border-border/50 text-muted-foreground text-xs uppercase tracking-widest font-semibold">
             <p>&copy; {new Date().getFullYear()} Shemt Analytics Inc. All rights reserved.</p>
             <div className="flex gap-8">

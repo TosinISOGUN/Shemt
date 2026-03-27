@@ -17,7 +17,7 @@ export const aiService = {
    * Ask a question about analytics data
    */
   askAnalyticsQuestion: async (
-    userId: string, 
+    projectId: string, 
     question: string, 
     history: AIMessage[] = []
   ): Promise<string> => {
@@ -25,14 +25,14 @@ export const aiService = {
     const { data: metrics } = await supabase
       .from('metrics_summary')
       .select('*')
-      .eq('user_id', userId)
+      .eq('id', projectId) // metrics_summary ID is the project UUID
       .single()
 
     // 2. Fetch recent events for trend context
     const { data: events } = await supabase
       .from('analytics_events')
       .select('*')
-      .eq('user_id', userId)
+      .eq('project_id', projectId)
       .order('created_at', { ascending: false })
       .limit(20)
 
@@ -69,11 +69,11 @@ ${events?.map(e => `- ${new Date(e.created_at).toLocaleDateString()}: ${e.event_
   /**
    * Generate suggested insights automatically
    */
-  generateSuggestedInsights: async (userId: string): Promise<string[]> => {
+  generateSuggestedInsights: async (projectId: string): Promise<string[]> => {
     const question = "Provide 3 short, punchy, bullet-point style insights or trends based on the data. Each should be one sentence."
     
     try {
-      const answer = await aiService.askAnalyticsQuestion(userId, question)
+      const answer = await aiService.askAnalyticsQuestion(projectId, question)
       
       // Parse bullet points from AI response
       const insights = answer

@@ -30,7 +30,7 @@ import { aiService, type AIMessage } from '@/services/aiService'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
-export function AIInsights() {
+export function AIInsights({ projectId }: { projectId?: string }) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<AIMessage[]>([])
   const [input, setInput] = useState('')
@@ -39,12 +39,12 @@ export function AIInsights() {
   const [loadingInsights, setLoadingInsights] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Load suggested insights on mount
+  // Load suggested insights on mount or when project changes
   useEffect(() => {
-    if (user?.id) {
-      loadInsights()
+    if (projectId) {
+      loadInsights(projectId)
     }
-  }, [user?.id])
+  }, [projectId])
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -53,11 +53,10 @@ export function AIInsights() {
     }
   }, [messages])
 
-  const loadInsights = async () => {
-    if (!user?.id) return
+  const loadInsights = async (id: string) => {
     setLoadingInsights(true)
     try {
-      const insights = await aiService.generateSuggestedInsights(user.id)
+      const insights = await aiService.generateSuggestedInsights(id)
       setSuggestedInsights(insights)
     } catch (error) {
       console.error(error)
@@ -67,7 +66,7 @@ export function AIInsights() {
   }
 
   const handleSend = async () => {
-    if (!input.trim() || !user?.id || loading) return
+    if (!input.trim() || !projectId || loading) return
 
     const userMessage: AIMessage = { role: 'user', content: input }
     setMessages(prev => [...prev, userMessage])
@@ -75,7 +74,7 @@ export function AIInsights() {
     setLoading(true)
 
     try {
-      const response = await aiService.askAnalyticsQuestion(user.id, input, messages)
+      const response = await aiService.askAnalyticsQuestion(projectId, input, messages)
       const assistantMessage: AIMessage = { role: 'assistant', content: response }
       setMessages(prev => [...prev, assistantMessage])
     } catch (error: any) {

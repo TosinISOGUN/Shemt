@@ -248,7 +248,7 @@ window.shemt.track('conversion_event', {
                 >
                   View Docs
                 </a>
-                <Button className="h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black shadow-xl shadow-primary/20 px-8" onClick={() => navigate({ to: '/dashboard/analytics' })}>
+                <Button className="h-12 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-xl shadow-primary/20 px-8" onClick={() => navigate({ to: '/dashboard/analytics' })}>
                   Check Analytics
                 </Button>
               </div>
