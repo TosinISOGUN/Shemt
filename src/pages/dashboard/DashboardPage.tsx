@@ -295,7 +295,7 @@ export function DashboardPage() {
                 </div>
 
                 <div className="mt-10 flex flex-wrap gap-4">
-                  <Button onClick={() => analyticsService.seedSampleData(user?.id || '').then(handleRefresh)} variant="outline" className="rounded-xl font-bold bg-background/50 border-primary/20 hover:bg-primary/5">
+                  <Button onClick={() => analyticsService.seedSampleData(projectId || '').then(handleRefresh)} variant="outline" className="rounded-xl font-bold bg-background/50 border-primary/20 hover:bg-primary/5">
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Demo with Sample Data
                   </Button>

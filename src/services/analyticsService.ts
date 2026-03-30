@@ -396,13 +396,9 @@ class AnalyticsService {
 
   async getAiInsights(projectId: string = this.projectId) {
     try {
-      // In a real scenario, we'd pass the userId or projectId to the AI service
-      // For now, we'll try to get the user from supabase session if needed, 
-      // but aiService.generateSuggestedInsights expects a userId.
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return ["Connect your account to see AI insights."];
+      if (!projectId) return ["Connect your account to see AI insights."];
 
-      return await aiService.generateSuggestedInsights(user.id);
+      return await aiService.generateSuggestedInsights(projectId);
     } catch (error) {
       console.error('AI Insights fetch error:', error);
       return [
@@ -458,21 +454,8 @@ class AnalyticsService {
   /**
    * Seed sample data for testing purposes
    */
-  async seedSampleData(userId: string) {
-    console.log('Seeding real database data for user:', userId);
-
-    // 1. Get user's first project
-    const { data: project } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('user_id', userId)
-      .limit(1)
-      .single();
-
-    if (!project) {
-      console.error('No project found to seed data into');
-      return false;
-    }
+  async seedSampleData(projectId: string) {
+    console.log('Seeding real database data for project:', projectId);
 
     const events: any[] = [];
     const now = new Date();
@@ -483,7 +466,7 @@ class AnalyticsService {
       date.setDate(date.getDate() - Math.floor(Math.random() * 7));
 
       events.push({
-        project_id: project.id,
+        project_id: projectId,
         name: type,
         properties: type === 'paid' ? { price: Math.floor(Math.random() * 100) + 10 } : { title: 'Sample Page' },
         user_id: `user-${Math.floor(Math.random() * 10)}`,

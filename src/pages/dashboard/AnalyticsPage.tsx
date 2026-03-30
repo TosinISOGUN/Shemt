@@ -305,7 +305,7 @@ export function AnalyticsPage() {
           analyticsService.getRevenueTrend(selectedProject, options),
           analyticsService.getUserGrowth(selectedProject, options),
           analyticsService.getConversionFunnel(selectedProject, options),
-          analyticsService.getAiInsights(),
+          analyticsService.getAiInsights(selectedProject),
           analyticsService.getRecentActivity(selectedProject),
           analyticsService.getAnalyticsHighlights(selectedProject, options)
         ])
@@ -444,7 +444,7 @@ export function AnalyticsPage() {
               className="gap-2 h-10 text-xs"
               onClick={async () => {
                 if (user?.id && selectedProject) {
-                  await analyticsService.seedSampleData(user.id);
+                  await analyticsService.seedSampleData(selectedProject);
                   // Refresh data for current project
                   const m = await analyticsService.getDashboardMetrics(selectedProject);
                   setMetrics(m);

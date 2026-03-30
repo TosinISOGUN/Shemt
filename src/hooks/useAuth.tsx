@@ -15,6 +15,7 @@ import {
 } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
 import type { User as AppUser } from '@/lib/supabase/client'
+import { notificationService } from '@/services/notificationService'
 
 interface AuthContextType {
   user: AppUser | null
@@ -177,6 +178,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (profileError) {
           console.error('Error creating user profile:', profileError)
+        } else {
+          // Send automatic onboarding notification!
+          await notificationService.createNotification({
+            user_id: data.user.id,
+            title: 'Welcome to Shemt! 🎉',
+            message: 'Your account is fully set up. Head over to your dashboard to create your first project and start tracking analytics.',
+            type: 'success'
+          })
         }
       }
 

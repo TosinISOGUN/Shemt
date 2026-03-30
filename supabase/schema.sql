@@ -156,3 +156,36 @@ GROUP BY p.user_id;
 
 -- Ensure RLS on views (if supported) or handle via security definer functions if needed
 -- Note: Views in Supabase/Postgres generally inherit permissions of the underlying tables
+
+-- 5. NOTIFICATIONS TABLE
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'info',
+    is_read BOOLEAN NOT NULL DEFAULT false,
+    read_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+-- Notifications RLS Policies
+DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
+DROP POLICY IF EXISTS "Users can update their own notifications" ON public.notifications;
+DROP POLICY IF EXISTS "Users can delete their own notifications" ON public.notifications;
+
+CREATE POLICY "Users can view their own notifications" ON public.notifications
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own notifications" ON public.notifications
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own notifications" ON public.notifications
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- System can universally insert notifications 
+CREATE POLICY "Allow service role insertion for notifications" ON public.notifications
+    FOR INSERT WITH CHECK (true);

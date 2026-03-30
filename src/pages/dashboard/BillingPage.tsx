@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { notificationService } from '@/services/notificationService'
 
 import { toast } from 'sonner'
 
@@ -56,9 +57,20 @@ export function BillingPage() {
   // @ts-ignore
   const initializePayment = usePaystackPayment(config)
 
-  const onSuccess = (reference: any) => {
+  const onSuccess = async (reference: any) => {
     console.log('Payment successful!', reference)
     toast.success('Subscription successful! Upgrading your account...')
+    
+    // Dispatch billing notification
+    if (user && user.id) {
+      await notificationService.createNotification({
+        user_id: user.id,
+        title: 'Upgrade Successful 👑',
+        message: 'You have successfully upgraded to Shemt Professional. Enjoy your unlimited perks!',
+        type: 'billing'
+      })
+    }
+
     // Webhook will update database, but we refresh for visibility
     setTimeout(() => {
       window.location.reload()

@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { aiService, type AIMessage } from '@/services/aiService'
 import { useAuth } from '@/hooks/useAuth'
+import { notificationService } from '@/services/notificationService'
 import { cn } from '@/lib/utils'
 
 export function AIInsights({ projectId }: { projectId?: string }) {
@@ -58,6 +59,25 @@ export function AIInsights({ projectId }: { projectId?: string }) {
     try {
       const insights = await aiService.generateSuggestedInsights(id)
       setSuggestedInsights(insights)
+
+      // Throttle AI Insights Notifications to once every 24 hours
+      if (user && insights.length > 0) {
+        const lastSent = localStorage.getItem('last_ai_insight_notification')
+        const now = Date.now()
+        
+        // If never sent or last sent was more than 24h ago
+        if (!lastSent || (now - parseInt(lastSent)) > 24 * 60 * 60 * 1000) {
+          await notificationService.createNotification({
+            user_id: user.id,
+            project_id: id,
+            title: 'New AI Insight Available ✨',
+            message: insights[0], // Use the first insight as the notification message
+            type: 'insight'
+          })
+          localStorage.setItem('last_ai_insight_notification', now.toString())
+        }
+      }
+
     } catch (error) {
       console.error(error)
     } finally {
@@ -213,7 +233,7 @@ export function AIInsights({ projectId }: { projectId?: string }) {
                 variant="ghost" 
                 size="icon" 
                 className="h-6 w-6 text-muted-foreground hover:text-primary"
-                onClick={loadInsights}
+                onClick={() => projectId && loadInsights(projectId)}
                 disabled={loadingInsights}
               >
                 <RefreshCw className={cn("h-3 w-3", loadingInsights && "animate-spin")} />
