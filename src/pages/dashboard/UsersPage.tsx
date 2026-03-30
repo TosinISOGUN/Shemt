@@ -66,25 +66,7 @@ import { formatDistanceToNow } from 'date-fns'
 
 // --- Custom Components ---
 
-const UserKpiCard = ({ title, value, icon: Icon, loading }: any) => (
-  <Card className="border-border/40 bg-card/10 backdrop-blur-sm group hover:border-primary/20 transition-all">
-    <CardContent className="p-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{title}</p>
-          {loading ? (
-            <Skeleton className="h-8 w-24" />
-          ) : (
-            <p className="text-3xl font-black tracking-tight">{value}</p>
-          )}
-        </div>
-        <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center border border-primary/10 group-hover:scale-110 transition-transform">
-          <Icon className="h-6 w-6 text-primary" />
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-)
+// --- Page Component ---
 
 export function UsersPage() {
   const { user } = useAuth()
@@ -150,9 +132,6 @@ export function UsersPage() {
     u.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
     u.location.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
-  const totalRevenue = users.reduce((sum, u) => sum + u.revenue, 0)
-  const activeNowCount = users.filter(u => u.status === 'online').length
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return
@@ -221,41 +200,32 @@ export function UsersPage() {
         </div>
       </div>
 
-      {/* 2. Top Metric Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-1">
-        <UserKpiCard title="Total Unique Users" value={users.length} icon={Users} loading={loading} />
-        <UserKpiCard title="Active Now" value={activeNowCount} icon={Activity} loading={loading} />
-        <UserKpiCard title="Total Revenue" value={`$${(totalRevenue || 0).toLocaleString()}`} icon={DollarSign} loading={loading} />
-        <UserKpiCard title="Avg. Loyalty" value={`${(users.length > 0 ? (users.reduce((s, u) => s + (u.eventCount || 0), 0) / users.length).toFixed(1) : '0.0')} ev/u`} icon={Zap} loading={loading} />
+      {/* 2. Simple User List Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 px-1 gap-4 border-b border-border/10">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by User ID or Location..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-11 bg-muted/20 border-border/40 focus:ring-primary/20 rounded-xl"
+          />
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">
+          Showing <span className="font-bold text-foreground">{filteredUsers.length}</span> {filteredUsers.length === 1 ? 'user' : 'users'} found
+        </p>
       </div>
 
-      {/* 3. Users Table Explorer */}
-      <Card className="border-border/40 bg-card/10 backdrop-blur-sm overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between py-6 px-6">
-          <div>
-            <CardTitle className="text-xl font-bold">User Explorer</CardTitle>
-            <CardDescription>Real-time list of identified tracking IDs</CardDescription>
-          </div>
-          <div className="relative w-80">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Filter by User ID or Location..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 bg-muted/20 border-border/40 focus:ring-primary/20"
-            />
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
+      {/* 3. Softened Users Table */}
+      <div className="overflow-x-auto rounded-xl border border-border/5 bg-card/5 backdrop-blur-sm">
             <Table>
               <TableHeader className="bg-muted/30 border-y border-border/10">
                 <TableRow className="hover:bg-transparent border-none">
-                  <TableHead className="font-bold py-4 pl-6 text-[10px] uppercase tracking-widest">Identified User</TableHead>
+                  <TableHead className="font-bold py-4 pl-6 text-[10px] uppercase tracking-widest">User & Device</TableHead>
                   <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest">Status</TableHead>
-                  <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest">Last Activity</TableHead>
-                  <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest text-center">Engagement</TableHead>
-                  <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest text-right">Lifetime Value</TableHead>
+                  <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest">Last Seen</TableHead>
+                  <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest text-center">Total Actions</TableHead>
+                  <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest text-right">Value Generated</TableHead>
                   <TableHead className="w-[80px] pr-6"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -328,16 +298,14 @@ export function UsersPage() {
                 ))}
               </TableBody>
             </Table>
-          </div>
-        </CardContent>
-      </Card>
+      </div>
 
-      {/* 4. User Detail Dialog */}
+      {/* 4. Simplified User Detail Dialog */}
       <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-card border-border/40">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto bg-card border-border/40">
            <DialogHeader>
               <div className="flex items-center gap-4 mb-2">
-                 <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-xl">
+                 <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-xl">
                     {selectedUser?.id.substring(0, 2).toUpperCase()}
                  </div>
                  <div>
@@ -348,22 +316,17 @@ export function UsersPage() {
                     </div>
                  </div>
               </div>
-              <DialogDescription className="text-muted-foreground">Detailed activity timeline for this identified user session.</DialogDescription>
            </DialogHeader>
 
-           <div className="space-y-6 mt-6">
-              <div className="grid grid-cols-3 gap-4">
+           <div className="space-y-6 mt-4">
+              <div className="grid grid-cols-2 gap-4">
                  <div className="bg-muted/30 p-4 rounded-xl border border-border/10">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Lifetime Value</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Value Generated</p>
                     <p className="text-lg font-black text-emerald-500">${selectedUser?.revenue.toFixed(2)}</p>
                  </div>
                  <div className="bg-muted/30 p-4 rounded-xl border border-border/10">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Total Signals</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Total Actions</p>
                     <p className="text-lg font-black">{selectedUser?.eventCount}</p>
-                 </div>
-                 <div className="bg-muted/30 p-4 rounded-xl border border-border/10">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Primary Device</p>
-                    <p className="text-lg font-black">{selectedUser?.device}</p>
                  </div>
               </div>
 

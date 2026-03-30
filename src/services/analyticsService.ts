@@ -451,38 +451,6 @@ class AnalyticsService {
     document.body.removeChild(a);
   }
 
-  /**
-   * Seed sample data for testing purposes
-   */
-  async seedSampleData(projectId: string) {
-    console.log('Seeding real database data for project:', projectId);
-
-    const events: any[] = [];
-    const now = new Date();
-
-    for (let i = 0; i < 50; i++) {
-      const type = ['page_view', 'signup', 'activated', 'paid'][Math.floor(Math.random() * 4)];
-      const date = new Date(now);
-      date.setDate(date.getDate() - Math.floor(Math.random() * 7));
-
-      events.push({
-        project_id: projectId,
-        name: type,
-        properties: type === 'paid' ? { price: Math.floor(Math.random() * 100) + 10 } : { title: 'Sample Page' },
-        user_id: `user-${Math.floor(Math.random() * 10)}`,
-        session_id: `sess-${Math.floor(Math.random() * 100)}`,
-        created_at: date.toISOString()
-      });
-    }
-
-    const { error } = await supabase.from('events').insert(events);
-    if (error) {
-      console.error('Seed error:', error);
-      return false;
-    }
-
-    return true;
-  }
 }
 
 export const analyticsService = new AnalyticsService();

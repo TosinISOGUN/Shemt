@@ -81,7 +81,7 @@ export function TopNavbar({ onMenuClick, sidebarCollapsed }: TopNavbarProps) {
     })
 
     return () => {
-      channel.unsubscribe()
+      notificationService.removeChannel(channel)
     }
   }, [user])
 

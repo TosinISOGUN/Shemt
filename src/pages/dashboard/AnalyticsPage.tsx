@@ -438,23 +438,7 @@ export function AnalyticsPage() {
             }} />
           )}
 
-          {(import.meta as any).env.DEV && projects.length > 0 && metrics?.events?.value === 0 && !loading && (
-            <Button
-              variant="secondary"
-              className="gap-2 h-10 text-xs"
-              onClick={async () => {
-                if (user?.id && selectedProject) {
-                  await analyticsService.seedSampleData(selectedProject);
-                  // Refresh data for current project
-                  const m = await analyticsService.getDashboardMetrics(selectedProject);
-                  setMetrics(m);
-                }
-              }}
-            >
-              <Activity className="h-4 w-4" />
-              Seed Test Data
-            </Button>
-          )}
+
 
           <div className="flex items-center gap-2 bg-muted/40 p-1 rounded-lg border border-border/40">
             <Button

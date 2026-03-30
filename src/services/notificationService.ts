@@ -124,8 +124,9 @@ class NotificationService {
    * Useful for instantly updating the badge counter.
    */
   subscribeToNotifications(userId: string, callback: () => void): RealtimeChannel {
+    // Use a unique channel name per user to avoid stacking duplicate connections.
     const channel = supabase
-      .channel('public:notifications')
+      .channel(`notifications:${userId}`)
       .on(
         'postgres_changes',
         {
@@ -134,14 +135,21 @@ class NotificationService {
           table: 'notifications',
           filter: `user_id=eq.${userId}`,
         },
-        (payload) => {
-          console.log('Realtime Notification change received!', payload)
+        () => {
           callback()
         }
       )
       .subscribe()
 
     return channel
+  }
+
+  /**
+   * Fully remove a Realtime channel and free its connection.
+   * Call this instead of channel.unsubscribe() to avoid connection leaks.
+   */
+  removeChannel(channel: RealtimeChannel): void {
+    supabase.removeChannel(channel)
   }
 }
 
