@@ -63,6 +63,7 @@ import { cn } from '@/lib/utils'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
+import { teamService, TeamMember, TeamRole } from '@/services/teamService'
 
 // --- Custom Components ---
 
@@ -78,6 +79,10 @@ export function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
+  
+  // Team state
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [loadingTeam, setLoadingTeam] = useState(false)
 
   // Invite dialog state
   const [showInviteDialog, setShowInviteDialog] = useState(false)
@@ -111,21 +116,27 @@ export function UsersPage() {
     fetchProjects()
   }, [user?.id])
 
-  // 2. Fetch Users when project changes
+  // 2. Fetch Users and Team when project changes
   useEffect(() => {
-    const loadUsers = async () => {
+    const loadData = async () => {
       if (!selectedProject) return
       setLoading(true)
+      setLoadingTeam(true)
       try {
-        const data = await analyticsService.getUsersExplorer(selectedProject)
-        setUsers(data)
+        const [usersData, teamData] = await Promise.all([
+          analyticsService.getUsersExplorer(selectedProject),
+          teamService.getProjectTeam(selectedProject)
+        ])
+        setUsers(usersData)
+        setTeamMembers(teamData)
       } catch (err) {
-        setError("Failed to load users.")
+        setError("Failed to load project data.")
       } finally {
         setLoading(false)
+        setLoadingTeam(false)
       }
     }
-    loadUsers()
+    loadData()
   }, [selectedProject])
 
   const filteredUsers = users.filter(u => 
@@ -134,19 +145,63 @@ export function UsersPage() {
   )
 
   const handleInvite = async () => {
-    if (!inviteEmail.trim()) return
+    if (!inviteEmail.trim()) {
+      toast.error('Please enter a valid email address')
+      return
+    }
+    
+    if (!user?.id) {
+      toast.error('You must be logged in to invite members')
+      return
+    }
+
+    if (!selectedProject) {
+      toast.error('Please select a project first')
+      return
+    }
+
     setInviting(true)
     try {
-      // For now, simulate invite (Supabase team table will be added in the next step)
-      await new Promise(resolve => setTimeout(resolve, 1200))
-      toast.success(`Invitation sent to ${inviteEmail}`)
-      setInviteEmail('')
-      setInviteRole('viewer')
-      setShowInviteDialog(false)
-    } catch (err) {
-      toast.error('Failed to send invitation')
+      const { data, error: inviteErr } = await teamService.inviteMember(
+        selectedProject, 
+        inviteEmail, 
+        inviteRole as TeamRole,
+        user.id
+      )
+      
+      if (inviteErr) {
+        if (inviteErr.code === '23505') {
+          toast.error('This user is already a member or has been invited.')
+        } else {
+          toast.error(`Invitation failed: ${inviteErr.message || 'Check project permissions'}`)
+        }
+        return
+      }
+
+      if (data) {
+        setTeamMembers(prev => [...prev, data])
+        toast.success(`Invitation sent to ${inviteEmail}`)
+        setInviteEmail('')
+        setInviteRole('viewer')
+        setShowInviteDialog(false)
+      } else {
+        toast.error('Failed to create invitation record')
+      }
+    } catch (err: any) {
+      console.error('Invite exception:', err)
+      toast.error('An unexpected error occurred during invitation')
     } finally {
       setInviting(false)
+    }
+  }
+
+  const handleRemoveMember = async (memberId: string) => {
+    const success = await teamService.removeMember(memberId)
+    if (success) {
+      setTeamMembers(prev => prev.filter(m => m.id !== memberId))
+      toast.success('Team member removed')
+    } else {
+      toast.error('Failed to remove team member')
     }
   }
 
@@ -165,7 +220,7 @@ export function UsersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-1">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-4xl font-black tracking-tight text-foreground">Users</h1>
+            <h1 className="text-4xl font-black tracking-tight text-foreground">Users & Team</h1>
             {projects.length > 0 && (
               <Select 
                 value={selectedProject} 
@@ -174,8 +229,8 @@ export function UsersPage() {
                   setSelectedProjectData(projects.find(p => p.id === val) || null)
                 }}
               >
-                <SelectTrigger className="w-[200px] h-9 bg-muted/40 border-border/40 font-bold">
-                   <span className="truncate">{selectedProjectData?.name || 'Select Project'}</span>
+                <SelectTrigger className="w-[200px] h-9 bg-muted/40 border-border/40 font-bold focus:ring-0">
+                   <SelectValue placeholder="Select Project" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border/40">
                   {projects.map(p => (
@@ -185,35 +240,120 @@ export function UsersPage() {
                </Select>
             )}
           </div>
-          <p className="text-muted-foreground font-medium">Explore and analyze individual user behavior</p>
+          <p className="text-muted-foreground font-medium">Manage project collaborators and explore user behavior</p>
         </div>
         
         <div className="flex items-center gap-3">
           <Button 
             variant="outline" 
-            className="h-10 bg-card/50 border-border/40 font-bold gap-2"
+            className="h-10 bg-card/50 border-border/40 font-bold gap-2 hover:bg-primary/5 hover:border-primary/20 transition-all"
             onClick={() => setShowInviteDialog(true)}
           >
             <UserPlus className="h-4 w-4" />
-            Invite Admin
+            Invite Member
           </Button>
         </div>
       </div>
 
-      {/* 2. Simple User List Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 px-1 gap-4 border-b border-border/10">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by User ID or Location..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11 bg-muted/20 border-border/40 focus:ring-primary/20 rounded-xl"
-          />
+      {/* 1.5 Team Members Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-lg font-black tracking-tight flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            Project Team
+          </h2>
+          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+            {teamMembers.length} {teamMembers.length === 1 ? 'Collaborator' : 'Collaborators'}
+          </Badge>
         </div>
-        <p className="text-sm font-medium text-muted-foreground">
-          Showing <span className="font-bold text-foreground">{filteredUsers.length}</span> {filteredUsers.length === 1 ? 'user' : 'users'} found
-        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {loadingTeam ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+            ))
+          ) : teamMembers.length === 0 ? (
+            <div className="col-span-full py-10 px-4 border-2 border-dashed border-border/20 rounded-3xl text-center">
+              <Users className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-muted-foreground text-sm font-medium">No other team members yet</p>
+              <Button 
+                variant="link" 
+                className="text-primary font-bold text-xs"
+                onClick={() => setShowInviteDialog(true)}
+              >
+                Invite someone now
+              </Button>
+            </div>
+          ) : teamMembers.map((member) => (
+            <motion.div 
+              key={member.id}
+              layout
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-card/40 backdrop-blur-sm border border-border/10 p-4 rounded-2xl flex items-center justify-between group hover:border-primary/20 transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                  {member.invited_email.substring(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold truncate">{member.invited_email}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <Badge variant="secondary" className="capitalize text-[10px] py-0 h-4 bg-muted/50 border-none font-bold">
+                      {member.role}
+                    </Badge>
+                    {member.status === 'pending' && (
+                      <span className="text-[10px] text-orange-500/80 font-medium italic flex items-center gap-1">
+                        <Clock className="h-2.5 w-2.5" /> Pending
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger render={
+                  <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                } />
+                <DropdownMenuContent align="end" className="bg-card border-border/40">
+                  <DropdownMenuItem 
+                    className="text-destructive font-bold text-xs gap-2 focus:text-destructive"
+                    onClick={() => handleRemoveMember(member.id)}
+                  >
+                    Remove Member
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      <div className="h-px bg-border/5 w-full my-4" />
+
+      {/* 2. Simple User List Header */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-black tracking-tight flex items-center gap-2 px-1">
+          <Users className="h-5 w-5 text-primary" />
+          End Users
+        </h2>
+        
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between py-4 px-1 gap-4 border-b border-border/10">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by User ID or Location..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-11 bg-muted/20 border-border/40 focus:ring-primary/20 rounded-xl"
+            />
+          </div>
+          <p className="text-sm font-medium text-muted-foreground">
+            Showing <span className="font-bold text-foreground">{filteredUsers.length}</span> {filteredUsers.length === 1 ? 'user' : 'users'} found
+          </p>
+        </div>
       </div>
 
       {/* 3. Softened Users Table */}

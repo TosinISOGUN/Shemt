@@ -181,22 +181,24 @@ export function TopNavbar({ onMenuClick, sidebarCollapsed }: TopNavbarProps) {
 
           {/* Notifications */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0"
-              >
-                <div className="relative flex items-center justify-center">
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground border-2 border-background">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger 
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0"
+                >
+                  <div className="relative flex items-center justify-center">
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground border-2 border-background">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end" className="w-80 p-0 border-border/50 shadow-xl overflow-hidden rounded-xl">
               <div className="flex items-center justify-between p-4 border-b bg-muted/20">
                 <span className="font-bold text-sm">Notifications</span>

@@ -189,3 +189,35 @@ CREATE POLICY "Users can delete their own notifications" ON public.notifications
 -- System can universally insert notifications 
 CREATE POLICY "Allow service role insertion for notifications" ON public.notifications
     FOR INSERT WITH CHECK (true);
+
+-- 6. TEAM MEMBERS TABLE
+-- Tracks collaborators on projects
+CREATE TABLE IF NOT EXISTS public.team_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+    invited_email TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin', 'editor', 'viewer')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted')),
+    invited_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(project_id, invited_email)
+);
+
+ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+
+-- Team Members RLS Policies
+DROP POLICY IF EXISTS "Project owners can manage team members" ON public.team_members;
+DROP POLICY IF EXISTS "Members can see their own memberships" ON public.team_members;
+
+-- 1. Project owners can see, invite, and remove members
+CREATE POLICY "Project owners can manage team members" ON public.team_members
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.projects 
+            WHERE id = team_members.project_id AND user_id = auth.uid()
+        )
+    );
+
+-- 2. People who are invited can see their invitation (optional for future acceptance flow)
+CREATE POLICY "Members can see their own invitations" ON public.team_members
+    FOR SELECT USING (invited_email = auth.jwt() ->> 'email');
