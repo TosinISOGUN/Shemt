@@ -306,22 +306,25 @@ export function DashboardPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {/* Revenue Chart */}
-          <Card className="transition-all hover:shadow-lg border-border/50">
+          <Card className="transition-all hover:shadow-lg border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>Monthly revenue growth trends</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-emerald-500" />
+                Revenue Overview
+              </CardTitle>
+              <CardDescription>Daily revenue from paid events</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoadingRevenue ? (
                 <Skeleton className="h-[300px] w-full" />
-              ) : (
+              ) : revenueHistory && revenueHistory.length > 0 ? (
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={revenueHistory}>
                       <defs>
                         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
@@ -331,6 +334,7 @@ export function DashboardPage() {
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
+                        tickFormatter={(v) => new Date(v).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
                       />
                       <YAxis
                         stroke="hsl(var(--muted-foreground))"
@@ -344,39 +348,48 @@ export function DashboardPage() {
                           backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
                           borderRadius: '12px',
-                          boxShadow: 'var(--shadow-lg)',
-                          backdropFilter: 'blur(8px)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                           color: 'hsl(var(--foreground))'
                         }}
                         labelStyle={{ color: 'hsl(var(--foreground))' }}
-                        itemStyle={{ color: 'hsl(var(--foreground))' }}
+                        formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                        labelFormatter={(label) => new Date(label).toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' })}
                       />
                       <Area
                         type="monotone"
-                        dataKey="value"
+                        dataKey="revenue"
                         name="Revenue"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
+                        stroke="#10b981"
+                        strokeWidth={2.5}
                         fillOpacity={1}
                         fill="url(#colorRevenue)"
                       />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
+              ) : (
+                <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground">
+                  <DollarSign className="h-10 w-10 mb-3 opacity-20" />
+                  <p className="text-sm font-medium">No revenue data yet</p>
+                  <p className="text-xs opacity-60 mt-1">Revenue will appear when "paid" events are tracked</p>
+                </div>
               )}
             </CardContent>
           </Card>
 
           {/* Users Chart */}
-          <Card className="transition-all hover:shadow-lg border-border/50">
+          <Card className="transition-all hover:shadow-lg border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>User Growth</CardTitle>
-              <CardDescription>New user registrations per month</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <UsersIcon className="h-4 w-4 text-indigo-500" />
+                User Growth
+              </CardTitle>
+              <CardDescription>New user signups over time</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoadingGrowth ? (
                 <Skeleton className="h-[300px] w-full" />
-              ) : (
+              ) : userGrowth && userGrowth.length > 0 ? (
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={userGrowth}>
@@ -387,34 +400,42 @@ export function DashboardPage() {
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
+                        tickFormatter={(v) => new Date(v).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
                       />
                       <YAxis
                         stroke="hsl(var(--muted-foreground))"
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
+                        allowDecimals={false}
                       />
                       <Tooltip
-                        cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
+                        cursor={{ fill: 'rgba(99, 102, 241, 0.08)' }}
                         contentStyle={{
                           backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
                           borderRadius: '12px',
-                          boxShadow: 'var(--shadow-lg)',
-                          backdropFilter: 'blur(8px)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                           color: 'hsl(var(--foreground))'
                         }}
                         labelStyle={{ color: 'hsl(var(--foreground))' }}
-                        itemStyle={{ color: 'hsl(var(--foreground))' }}
+                        formatter={(value: number) => [value, 'Signups']}
+                        labelFormatter={(label) => new Date(label).toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' })}
                       />
                       <Bar
-                        dataKey="value"
+                        dataKey="users"
                         name="Users"
-                        fill="hsl(var(--accent))"
-                        radius={[4, 4, 0, 0]}
+                        fill="#6366f1"
+                        radius={[6, 6, 0, 0]}
                       />
                     </BarChart>
                   </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground">
+                  <UsersIcon className="h-10 w-10 mb-3 opacity-20" />
+                  <p className="text-sm font-medium">No signup data yet</p>
+                  <p className="text-xs opacity-60 mt-1">Growth will appear when "signup" events are tracked</p>
                 </div>
               )}
             </CardContent>

@@ -30,8 +30,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <ThemeProvider
         attribute="class"
         defaultTheme="system"
-        async
-        defaultTheme="system"
         enableSystem
         disableTransitionOnChange
       >
