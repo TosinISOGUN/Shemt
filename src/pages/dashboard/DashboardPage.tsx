@@ -16,6 +16,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   AlertCircle,
+  RefreshCw,
   Sparkles,
   BarChart3
 } from 'lucide-react'
