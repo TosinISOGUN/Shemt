@@ -394,7 +394,10 @@ export function LandingPage() {
                     size="lg"
                     variant="outline"
                     className="h-12 px-8 text-lg w-full sm:w-auto bg-background/50 backdrop-blur-md"
-                    onClick={() => analytics.track('cta_click', { location: 'hero', label: 'Watch Demo' })}
+                    onClick={() => {
+                      analytics.track('cta_click', { location: 'hero', label: 'Watch Demo' })
+                      document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })
+                    }}
                   >
                     Watch Demo
                   </Button>

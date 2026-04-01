@@ -132,6 +132,7 @@ CREATE POLICY "Allow service role insertion" ON public.events
 CREATE OR REPLACE VIEW public.analytics_events AS
 SELECT 
     e.id,
+    e.project_id,
     e.name as event_type,
     COALESCE(e.properties->>'value', '0') as value,
     e.created_at,
@@ -143,6 +144,7 @@ JOIN public.projects p ON e.project_id = p.id;
 -- View for metrics summary (Aggregated)
 CREATE OR REPLACE VIEW public.metrics_summary AS
 SELECT 
+    p.id as project_id,
     p.user_id,
     COALESCE(SUM((NULLIF(e.properties->>'value', '')::numeric)), 0) as revenue,
     COUNT(DISTINCT e.user_id) as active_users,
@@ -152,7 +154,7 @@ SELECT
     END as conversion_rate
 FROM public.projects p
 LEFT JOIN public.events e ON p.id = e.project_id
-GROUP BY p.user_id;
+GROUP BY p.id, p.user_id;
 
 -- Ensure RLS on views (if supported) or handle via security definer functions if needed
 -- Note: Views in Supabase/Postgres generally inherit permissions of the underlying tables

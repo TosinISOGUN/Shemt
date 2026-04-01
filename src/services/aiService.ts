@@ -25,7 +25,7 @@ export const aiService = {
     const { data: metrics } = await supabase
       .from('metrics_summary')
       .select('*')
-      .eq('id', projectId) // metrics_summary ID is the project UUID
+      .eq('project_id', projectId)
       .single()
 
     // 2. Fetch recent events for trend context
@@ -47,22 +47,38 @@ RECENT ACTIVITY (LATEST 20 EVENTS):
 ${events?.map(e => `- ${new Date(e.created_at).toLocaleDateString()}: ${e.event_type} = ${e.value}`).join('\n') || 'No recent activity.'}
     `.trim()
 
-    // 4. Call Supabase Edge Function
+    // 4. Call Supabase Edge Function with explicit Auth token
     try {
+      // Get current session for explicit auth header (bulletproof method)
+      const { data: { session } } = await supabase.auth.getSession()
+      const access_token = session?.access_token
+
       const { data, error } = await supabase.functions.invoke('ai-insights', {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
         body: {
           question,
           dataSummary,
-          history: history.slice(-6) // Only send last 6 messages for context
+          history: history.slice(-6)
         }
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase Function Error:', error)
+        // Extract message from standard Supabase error format
+        const errorMsg = error instanceof Error ? error.message : 'Edge Function error';
+        throw new Error(errorMsg)
+      }
+
+      if (!data || !data.answer) {
+        throw new Error('AI returned an empty response')
+      }
 
       return data.answer
     } catch (error: any) {
-      console.error('AI Service Error:', error)
-      throw new Error(error.message || 'Failed to get AI response')
+      console.error('AI Service Error Context:', error)
+      throw error 
     }
   },
 
